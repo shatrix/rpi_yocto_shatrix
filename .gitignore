@@ -1,6 +1,3 @@
-# ignore external layers directories
-external/
-
 # ignore build directory
 build-rpi/
 
