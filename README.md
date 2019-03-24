@@ -1,7 +1,10 @@
-# rpi_yocto_shatrix
+# Description
 Custom Yocto layer and configuration for RaspberryPi boards
 
-meta-shatrix-rpi layer depends on:
+# Fetch everything
+    git clone --recursive git@github.com:shatrix/rpi_yocto_shatrix.git
+
+# Depends on
 
     URI: git://git.yoctoproject.org/poky.git
     branch: thud
