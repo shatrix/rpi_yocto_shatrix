@@ -8,16 +8,16 @@
 ################################################################################
 
 # Defining important variables
-export SHATRIX_RPI_SCRIPT_PATH=$(dirname $(readlink -e $0))
-export SHATRIX_RPI_BUILD_PATH="$SHATRIX_RPI_SCRIPT_PATH/../build-rpi"
-export EXTERNAL_LAYERS_PATH="$SHATRIX_RPI_SCRIPT_PATH/../external"
+export SHATROX_RPI_SCRIPT_PATH=$(dirname $(readlink -e $0))
+export SHATROX_RPI_BUILD_PATH="$SHATROX_RPI_SCRIPT_PATH/../build-rpi"
+export EXTERNAL_LAYERS_PATH="$SHATROX_RPI_SCRIPT_PATH/../external"
 
 # make sure build dir exists
-mkdir -p $SHATRIX_RPI_BUILD_PATH
-cd $SHATRIX_RPI_BUILD_PATH
+mkdir -p $SHATROX_RPI_BUILD_PATH
+cd $SHATROX_RPI_BUILD_PATH
 
 # source the default poky init script
-. $EXTERNAL_LAYERS_PATH/poky/oe-init-build-env $SHATRIX_RPI_BUILD_PATH
+. $EXTERNAL_LAYERS_PATH/poky/oe-init-build-env $SHATROX_RPI_BUILD_PATH
 
 # Custom Functions
 function _print_info {
@@ -25,16 +25,16 @@ function _print_info {
 }
 
 function check_and_add_bblayer {
-  if [ "$(grep $1 $SHATRIX_RPI_BUILD_PATH/conf/bblayers.conf)" == "" ]; then
-    sed -i '/BBLAYERS ?= \" \\/a\  '$EXTERNAL_LAYERS_PATH'\/'$2' \\' $SHATRIX_RPI_BUILD_PATH/conf/bblayers.conf
+  if [ "$(grep $1 $SHATROX_RPI_BUILD_PATH/conf/bblayers.conf)" == "" ]; then
+    sed -i '/BBLAYERS ?= \" \\/a\  '$EXTERNAL_LAYERS_PATH'\/'$2' \\' $SHATROX_RPI_BUILD_PATH/conf/bblayers.conf
     _print_info "Layer: ($1) was added successfully to bblayers.conf"
   fi
 }
 
 # include the extra project conf, and update bblayers paths
-if [ "$(grep 'shatrix-rpi.conf' $SHATRIX_RPI_BUILD_PATH/conf/local.conf)" == "" ]; then
-  echo 'require conf/shatrix-rpi.conf' >> $SHATRIX_RPI_BUILD_PATH/conf/local.conf
-  _print_info "local.conf was updated successfully with the project extra shatrix-rpi.conf"
+if [ "$(grep 'shatrox-rpi.conf' $SHATROX_RPI_BUILD_PATH/conf/local.conf)" == "" ]; then
+  echo 'require conf/shatrox-rpi.conf' >> $SHATROX_RPI_BUILD_PATH/conf/local.conf
+  _print_info "local.conf was updated successfully with the project extra shatrox-rpi.conf"
 fi
 check_and_add_bblayer 'meta-qt5' 'meta-qt5'
 check_and_add_bblayer 'meta-raspberrypi' 'meta-raspberrypi'
@@ -45,11 +45,11 @@ check_and_add_bblayer 'meta-perl' 'meta-openembedded/meta-perl'
 check_and_add_bblayer 'meta-python' 'meta-openembedded/meta-python'
 check_and_add_bblayer 'meta-webserver' 'meta-openembedded/meta-webserver'
 check_and_add_bblayer 'meta-filesystems' 'meta-openembedded/meta-filesystems'
-check_and_add_bblayer 'meta-shatrix-rpi' '../meta-shatrix-rpi'
+check_and_add_bblayer 'meta-shatrox-rpi' '../meta-shatrox-rpi'
 
 # Print more help for the user
 echo ""
-_print_info "Please type bitbake sh-rpi-core-image"
+_print_info "Please type bitbake -k sh-rpi-core-image"
 
 # enter the bitbake shell
 bash

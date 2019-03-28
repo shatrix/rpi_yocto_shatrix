@@ -1,35 +1,29 @@
 ################################################################################
 #
-# Shatrix Basic Console Image, with dev tools
+# Shatrox Basic Console Image, with dev tools
 #
 ################################################################################
 inherit core-image
 
-DESCRIPTION = "Shatrix Basic Console Image, with dev tools"
+DESCRIPTION = "Shatrox Basic Console Image, with dev tools"
 HOMEPAGE    = "https://github.com/shatrix/rpi_yocto_shatrix"
 SECTION     = "image"
 PR          = "r001"
 
-IMAGE_BASENAME             = "shatrix-rpi-core"
-IMAGE_NAME                 = "${IMAGE_BASENAME}"
-IMAGE_FSTYPES              = "tar.xz"
-SDIMG_ROOTFS_TYPE          = "ext4.xz"
-IMAGE_LINGUAS              = "en-us"
-TARGETFILES_OUTPUTNAME    ?= "${IMAGE_BASENAME}-target"
-TOOLCHAIN_OUTPUTNAME      ?= "${IMAGE_BASENAME}-sdk-${SDKMACHINE}"
-
+# Base ROOTFS size 1GB
+#IMAGE_ROOTFS_SIZE          = "1048576"
+# Extra space in ROOTFS 6GB
+#IMAGE_ROOTFS_EXTRA_SPACE   = "6291456"
 BUILDHISTORY_COMMIT = "0"
 
-IMAGE_FEATURES += "package-management"
+IMAGE_FEATURES += "package-management dev-pkgs"
 
-DEPENDS += "bcm2835-bootfiles"
+DEPENDS += "bcm2835-bootfiles zip-native python3-pip-native"
 
-CORE_OS = " \
-  kernel-modules \
-  openssh openssh-keygen openssh-sftp-server \
-  packagegroup-core-boot \
-  tzdata \
-"
+CORE_OS = "packagegroup-core-boot ${CORE_IMAGE_EXTRA_INSTALL} \
+           openssh openssh-keygen openssh-sftp-server openssh-ssh openssh-scp \
+           connman connman-plugin-ethernet dhcp-client \
+           tzdata kernel-modules"
 
 WIFI_SUPPORT = " \
   crda \
@@ -62,12 +56,22 @@ DEV_SDK_INSTALL = " \
   ltrace \
   make \
   pkgconfig \
+  python \
+  python-modules \
+  python-pip \
+  python3 \
   python3-modules \
+  python3-pip \
   strace \
+  perl-misc \
+  perl-modules \
+  perl \
+  readline \
 "
 
-EXTRA_TOOLS_INSTALL = " \
+UTILITIES_INSTALL = " \
   bzip2 \
+  tar \
   devmem2 \
   dosfstools \
   ethtool \
@@ -81,6 +85,11 @@ EXTRA_TOOLS_INSTALL = " \
   less \
   lsof \
   nano \
+  texinfo \
+  usbutils \
+  zlib \
+  xz \
+  watchdog \
   netcat-openbsd \
   nmap \
   ntp ntp-tickadj \
@@ -93,18 +102,27 @@ EXTRA_TOOLS_INSTALL = " \
   wget \
   zip \
   curl \
+  nfs-utils \
+  nfs-utils-client \
+  openssl \
+  opkg \
+  opkg-utils \
+  nfs-utils \
+  nfs-utils-client \
+  libusb1 \
+  libxml2 \
+  rsync \
 "
 
 RPI_STUFF = " \
   userland \
-  bcm2835 \
   wiringpi \
 "
 
 IMAGE_INSTALL += " \
   ${CORE_OS} \
   ${DEV_SDK_INSTALL} \
-  ${EXTRA_TOOLS_INSTALL} \
+  ${UTILITIES_INSTALL} \
   ${RPI_STUFF} \
   ${WIFI_SUPPORT} \
 "
@@ -113,13 +131,8 @@ set_local_timezone_UTC() {
   ln -sf /usr/share/zoneinfo/UTC ${IMAGE_ROOTFS}/etc/localtime
 }
 
-disable_bootlogd() {
-  echo BOOTLOGD_ENABLE=no > ${IMAGE_ROOTFS}/etc/default/bootlogd
-}
-
 ROOTFS_POSTPROCESS_COMMAND += " \
   set_local_timezone_UTC ; \
-  disable_bootlogd ; \
 "
 
 export IMAGE_BASENAME = "sh-rpi-core-image"
