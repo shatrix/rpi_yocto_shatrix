@@ -1,5 +1,6 @@
 # Description
     SHATROX is a custom Poky distribution for RaspberryPi boards
+    Will be used as a base for IoT projects
 
 ## Prerequisites
     This project is based on Yocto Project 2.6 (thud)
