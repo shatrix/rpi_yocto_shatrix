@@ -49,7 +49,7 @@ check_and_add_bblayer 'meta-shatrox-rpi' '../meta-shatrox-rpi'
 
 # Print more help for the user
 echo ""
-_print_info "Please type bitbake -k sh-rpi-core-image"
+_print_info "Start Building the SHATROX image with this cmd: \$ bitbake -k sh-rpi-core-image"
 
 # enter the bitbake shell
 bash
