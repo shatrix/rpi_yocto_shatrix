@@ -10,29 +10,180 @@ HOMEPAGE    = "https://github.com/shatrix/rpi_yocto_shatrix"
 SECTION     = "image"
 PR          = "r001"
 
+BUILDHISTORY_COMMIT        = "0"
+
 # Base ROOTFS size 1GB
 #IMAGE_ROOTFS_SIZE          = "1048576"
 # Extra space in ROOTFS 6GB
 #IMAGE_ROOTFS_EXTRA_SPACE   = "6291456"
-BUILDHISTORY_COMMIT = "0"
 
-IMAGE_FEATURES += "package-management dev-pkgs"
+IMAGE_FEATURES += "package-management dev-pkgs debug-tweaks splash"
 
 DEPENDS += "bcm2835-bootfiles zip-native python3-pip-native"
 
-CORE_OS = "packagegroup-core-boot ${CORE_IMAGE_EXTRA_INSTALL} \
-           openssh openssh-keygen openssh-sftp-server openssh-ssh openssh-scp \
-           connman connman-plugin-ethernet dhcp-client \
-           tzdata kernel-modules"
+IMAGE_INSTALL = " \
+  ${CORE_SHATROX} \
+  ${DEV_SDK_PKGS} \
+  ${UTILITIES_PKGS} \
+  ${WIFI_PKGS} \
+  ${OPENCV_PKGS} \
+  ${QT5_PKGS} \
+  ${RPI_EXTRAS} \
+  ${WEB_PKGS} \
+  ${BLUETOOTH_PKGS} \
+"
 
-WIFI_SUPPORT = " \
+CORE_SHATROX = " \
+  ${CORE_IMAGE_EXTRA_INSTALL} \
+  packagegroup-core-boot  \
+  base-files \
+  base-passwd \
+  busybox \
+  zlib \
+  libxml2 \
+  initscripts-functions \
+  bash \
+  connman \
+  connman-plugin-ethernet \
+  dhcp-client \
+  tzdata \
+  kernel-modules \
+  netbase \
+  ethtool \
+  fuse \
+  sqlite3 \
+  mariadb \
+  mysql-python \
+  alsa-lib  \
+  alsa-utils \
+  dbus \
+  udev \
+  glibc \
+  ntfs-3g \
+  dnsmasq \
+  acl \
+  libcap \
+  libcap-bin \
+  attr \
+  ebtables \
+  arptables \
+  fontconfig \
+"
+
+WEB_PKGS = " \
+  openssh \
+  openssh-keygen \
+  openssh-sftp-server \
+  openssh-ssh \
+  openssh-scp \
+  iproute2 \
+  iptables \
+  libnfnetlink \
+  curl \
+  wget \
+  libwebsockets \
+  libcrypto \
+  jansson \
+  openssl \
+  openssl-engines \
+  openssl-misc \
+  net-tools \
+  apache2 \
+"
+
+BLUETOOTH_PKGS = " \
+  ppp \
+  ppp-l2tp \
+  ppp-minconn \
+  ppp-oa \
+  ppp-oe \
+  ppp-password \
+  ppp-radius \
+  ppp-tools \
+  ppp-winbind \
+"
+
+OPENCV_PKGS = " \
+  libopencv-calib3d \
+  libopencv-core \
+  libopencv-features2d \
+  libopencv-flann \
+  libopencv-highgui \
+  libopencv-imgproc \
+  libopencv-ml \
+  libopencv-objdetect \
+  libopencv-photo \
+  libopencv-stitching \
+  libopencv-superres \
+  libopencv-video \
+  libopencv-videostab \
+  opencv-apps \
+  opencv \
+"
+
+QT5_PKGS = " \
+  qtbase \
+  qtbase-plugins \
+  qt3d \
+  qtcharts \
+  qtdeclarative \
+  qtserialport \
+  qtdeclarative-tools \
+  qtdeclarative-qmlplugins \
+  qtconnectivity \
+  qtgraphicaleffects \
+  qtimageformats \
+  qtlocation \
+  qtquickcontrols \
+  qtsensors \
+  qtsensors-plugins \
+  qtsystems \
+  qtmultimedia \
+  qtserialbus \
+  qtsvg \
+  qttools \
+  qtscript \
+  qtquickcontrols2 \
+  qttranslations \
+  qttranslations-qtbase \
+  qttranslations-qtdeclarative \
+  qttranslations-qtconnectivity \
+  qttranslations-qtlocation \
+  qttranslations-qtmultimedia \
+  qttranslations-qtquickcontrols \
+  qttranslations-qtserialport \
+  qttranslations-qtwebsockets \
+  qttranslations-qtxmlpatterns \
+  qtwebsockets \
+  qtwebsockets-qmlplugins \
+  qtwebchannel \
+  qtxmlpatterns \
+  qtwayland \
+  qtbase-tools \
+  qtwebchannel-qmlplugins \
+  qtvirtualkeyboard \
+  tslib \
+  tslib-conf \
+  tslib-calibrate \
+  tslib-tests \
+  ttf-bitstream-vera \
+"
+
+WIFI_PKGS = " \
   crda \
   iw \
   linux-firmware-rpidistro-bcm43455 \
   wpa-supplicant \
+  wpa-supplicant-cli \
+  wpa-supplicant-passphrase \
+  libnl \
+  libnl-nf \
+  libnl-genl \
+  libnl-route \
+  hostapd \
 "
 
-DEV_SDK_INSTALL = " \
+DEV_SDK_PKGS = " \
   binutils \
   binutils-symlinks \
   coreutils \
@@ -67,9 +218,12 @@ DEV_SDK_INSTALL = " \
   perl-modules \
   perl \
   readline \
+  mtd-utils \
+  fbgrab \
+  babeltrace \
 "
 
-UTILITIES_INSTALL = " \
+UTILITIES_PKGS = " \
   bzip2 \
   tar \
   devmem2 \
@@ -80,14 +234,11 @@ UTILITIES_INSTALL = " \
   grep \
   i2c-tools \
   iperf3 \
-  iproute2 \
-  iptables \
   less \
   lsof \
   nano \
   texinfo \
   usbutils \
-  zlib \
   xz \
   watchdog \
   netcat-openbsd \
@@ -99,32 +250,45 @@ UTILITIES_INSTALL = " \
   tcpdump \
   unzip \
   util-linux \
-  wget \
   zip \
-  curl \
-  nfs-utils \
-  nfs-utils-client \
-  openssl \
   opkg \
   opkg-utils \
   nfs-utils \
   nfs-utils-client \
   libusb1 \
-  libxml2 \
   rsync \
+  e2fsprogs \
+  e2fsprogs-e2fsck \
+  e2fsprogs-mke2fs \
+  e2fsprogs-tune2fs \
+  fontconfig-utils \
+  libunwind \
+  linuxptp \
+  smartmontools \
+  gperftools \
+  cpprest \
+  libwebsockets \
+  asio \
+  libflac \
+  libsndfile1 \
+  libogg \
+  gstreamer1.0 \
+  gstreamer1.0-plugins-good-isomp4 \
+  gstreamer1.0-plugins-base-videoconvert \
+  gstreamer1.0-plugins-base-app \
+  gstreamer1.0-plugins-bad-videoparsersbad \
+  gconf \
+  libpng \
+  tiff \
+  htop \
+  iputils \
+  traceroute \
+  ncurses-terminfo \
 "
 
-RPI_STUFF = " \
+RPI_EXTRAS = " \
   userland \
   wiringpi \
-"
-
-IMAGE_INSTALL += " \
-  ${CORE_OS} \
-  ${DEV_SDK_INSTALL} \
-  ${UTILITIES_INSTALL} \
-  ${RPI_STUFF} \
-  ${WIFI_SUPPORT} \
 "
 
 set_local_timezone_UTC() {
@@ -133,6 +297,7 @@ set_local_timezone_UTC() {
 
 ROOTFS_POSTPROCESS_COMMAND += " \
   set_local_timezone_UTC ; \
+  write_image_manifest ; \
 "
 
 export IMAGE_BASENAME = "sh-rpi-core-image"
