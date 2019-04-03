@@ -21,13 +21,12 @@ IMAGE_FEATURES += "package-management dev-pkgs debug-tweaks splash"
 
 DEPENDS += "bcm2835-bootfiles zip-native python3-pip-native"
 
-IMAGE_INSTALL = " \
+IMAGE_INSTALL += " \
   ${CORE_SHATROX} \
   ${DEV_SDK_PKGS} \
   ${UTILITIES_PKGS} \
   ${WIFI_PKGS} \
   ${OPENCV_PKGS} \
-  ${QT5_PKGS} \
   ${RPI_EXTRAS} \
   ${WEB_PKGS} \
   ${BLUETOOTH_PKGS} \
@@ -119,54 +118,6 @@ OPENCV_PKGS = " \
   libopencv-videostab \
   opencv-apps \
   opencv \
-"
-
-QT5_PKGS = " \
-  qtbase \
-  qtbase-plugins \
-  qt3d \
-  qtcharts \
-  qtdeclarative \
-  qtserialport \
-  qtdeclarative-tools \
-  qtdeclarative-qmlplugins \
-  qtconnectivity \
-  qtgraphicaleffects \
-  qtimageformats \
-  qtlocation \
-  qtquickcontrols \
-  qtsensors \
-  qtsensors-plugins \
-  qtsystems \
-  qtmultimedia \
-  qtserialbus \
-  qtsvg \
-  qttools \
-  qtscript \
-  qtquickcontrols2 \
-  qttranslations \
-  qttranslations-qtbase \
-  qttranslations-qtdeclarative \
-  qttranslations-qtconnectivity \
-  qttranslations-qtlocation \
-  qttranslations-qtmultimedia \
-  qttranslations-qtquickcontrols \
-  qttranslations-qtserialport \
-  qttranslations-qtwebsockets \
-  qttranslations-qtxmlpatterns \
-  qtwebsockets \
-  qtwebsockets-qmlplugins \
-  qtwebchannel \
-  qtxmlpatterns \
-  qtwayland \
-  qtbase-tools \
-  qtwebchannel-qmlplugins \
-  qtvirtualkeyboard \
-  tslib \
-  tslib-conf \
-  tslib-calibrate \
-  tslib-tests \
-  ttf-bitstream-vera \
 "
 
 WIFI_PKGS = " \

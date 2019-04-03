@@ -26,7 +26,14 @@ $ git clone --recursive git@github.com:shatrix/rpi_yocto_shatrix.git
 ```bash
 $ cd rpi_yocto_shatrix
 $ ./scripts/start-bitbake-shell.sh
+```
+Start building the SHATROX basic image with this cmd
+```bash
 $ bitbake -k sh-rpi-core-image
+```
+Or build the SHATROX Qt image with this cmd
+```bash
+$ bitbake -k sh-rpi-qt-image
 ```
 
 ## Flash the output image to your MicroSD Card
