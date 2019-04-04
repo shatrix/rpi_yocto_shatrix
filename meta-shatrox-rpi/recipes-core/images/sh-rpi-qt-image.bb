@@ -13,6 +13,7 @@ PR          = "r001"
 
 IMAGE_INSTALL += " \
   ${QT5_PKGS} \
+  ${QT_EXAMPLES} \
 "
 
 QT5_PKGS = " \
@@ -62,6 +63,19 @@ QT5_PKGS = " \
   tslib-tests \
   ttf-bitstream-vera \
   qt5-env \
+"
+
+QT_EXAMPLES = " \
+  cinematicexperience \
+  qt5everywheredemo \
+  qt5ledscreen \
+  qt5nmapcarousedemo \
+  qt5nmapper \
+  qt5-opengles2-test \
+  qtsmarthome \
+  quitbattery \
+  quitindicators \
+  qt5-demo-extrafiles \
 "
 
 export IMAGE_BASENAME = "sh-rpi-qt-image"
