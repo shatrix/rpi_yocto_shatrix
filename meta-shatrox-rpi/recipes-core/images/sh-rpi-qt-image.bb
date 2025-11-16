@@ -9,7 +9,7 @@ require sh-rpi-core-image.bb
 DESCRIPTION = "Shatrox Qt Image, with dev tools"
 HOMEPAGE    = "https://github.com/shatrix/rpi_yocto_shatrix"
 SECTION     = "image"
-PR          = "r001"
+PR          = "r002"
 
 IMAGE_INSTALL += " \
   ${QT5_PKGS} \
