@@ -8,18 +8,18 @@ inherit core-image
 DESCRIPTION = "Shatrox Basic Console Image, with dev tools"
 HOMEPAGE    = "https://github.com/shatrix/rpi_yocto_shatrix"
 SECTION     = "image"
-PR          = "r001"
+PR          = "r002"
 
 BUILDHISTORY_COMMIT        = "0"
 
 # Base ROOTFS size 1GB
-#IMAGE_ROOTFS_SIZE          = "1048576"
+IMAGE_ROOTFS_SIZE          = "1048576"
 # Extra space in ROOTFS 6GB
-#IMAGE_ROOTFS_EXTRA_SPACE   = "6291456"
+IMAGE_ROOTFS_EXTRA_SPACE   = "6291456"
 
 IMAGE_FEATURES += "package-management dev-pkgs debug-tweaks splash"
 
-DEPENDS += "bcm2835-bootfiles zip-native python3-pip-native"
+DEPENDS += "zip-native python3-pip-native"
 
 IMAGE_INSTALL += " \
   ${CORE_SHATROX} \
@@ -27,7 +27,6 @@ IMAGE_INSTALL += " \
   ${UTILITIES_PKGS} \
   ${WIFI_PKGS} \
   ${OPENCV_PKGS} \
-  ${RPI_EXTRAS} \
   ${WEB_PKGS} \
   ${BLUETOOTH_PKGS} \
 "
@@ -44,7 +43,6 @@ CORE_SHATROX = " \
   bash \
   connman \
   connman-plugin-ethernet \
-  dhcp-client \
   tzdata \
   kernel-modules \
   netbase \
@@ -52,7 +50,6 @@ CORE_SHATROX = " \
   fuse \
   sqlite3 \
   mariadb \
-  mysql-python \
   alsa-lib  \
   alsa-utils \
   dbus \
@@ -70,11 +67,6 @@ CORE_SHATROX = " \
 "
 
 WEB_PKGS = " \
-  openssh \
-  openssh-keygen \
-  openssh-sftp-server \
-  openssh-ssh \
-  openssh-scp \
   iproute2 \
   iptables \
   libnfnetlink \
@@ -121,7 +113,6 @@ OPENCV_PKGS = " \
 "
 
 WIFI_PKGS = " \
-  crda \
   iw \
   linux-firmware-rpidistro-bcm43455 \
   wpa-supplicant \
@@ -158,20 +149,11 @@ DEV_SDK_PKGS = " \
   ltrace \
   make \
   pkgconfig \
-  python \
-  python-modules \
-  python-pip \
   python3 \
   python3-modules \
   python3-pip \
   strace \
-  perl-misc \
-  perl-modules \
-  perl \
   readline \
-  mtd-utils \
-  fbgrab \
-  babeltrace \
 "
 
 UTILITIES_PKGS = " \
@@ -235,11 +217,6 @@ UTILITIES_PKGS = " \
   iputils \
   traceroute \
   ncurses-terminfo \
-"
-
-RPI_EXTRAS = " \
-  userland \
-  wiringpi \
 "
 
 set_local_timezone_UTC() {
