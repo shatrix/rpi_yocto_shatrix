@@ -1,16 +1,16 @@
 [submodule "external/poky"]
 	path = external/poky
 	url = git://git.yoctoproject.org/poky.git
-	branch = thud
+	branch = scarthgap
 [submodule "external/meta-openembedded"]
 	path = external/meta-openembedded
 	url = git://git.openembedded.org/meta-openembedded
-	branch = thud
+	branch = scarthgap
 [submodule "external/meta-qt5"]
 	path = external/meta-qt5
 	url = https://github.com/meta-qt5/meta-qt5
-	branch = thud
+	branch = scarthgap
 [submodule "external/meta-raspberrypi"]
 	path = external/meta-raspberrypi
 	url = git://git.yoctoproject.org/meta-raspberrypi
-	branch = thud
+	branch = scarthgap
