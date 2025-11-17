@@ -28,7 +28,7 @@ zstd bmap-tools
 
 ## Fetch everything
 ```bash
-git clone --recursive git@github.com:shatrix/rpi_yocto_shatrix.git
+git clone --recursive https://github.com/shatrix/rpi_yocto_shatrix.git
 ```
 
 ## Build SHATROX Distro for RaspberryPi
