@@ -13,9 +13,9 @@ LICENSE     = "MIT"
 PR          = "r002"
 
 # Set a minimal default rootfs size 1GB
-# The 6GB extra space is for package management headroom
+# The 1GB extra space is for package management headroom
 IMAGE_ROOTFS_SIZE = "1048576"
-IMAGE_ROOTFS_EXTRA_SPACE = "6291456"
+IMAGE_ROOTFS_EXTRA_SPACE = "1048576"
 
 # Enable package management + dev debugging
 IMAGE_FEATURES += "package-management dev-pkgs debug-tweaks"
