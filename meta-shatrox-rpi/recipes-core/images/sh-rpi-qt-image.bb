@@ -1,81 +1,52 @@
 ################################################################################
-#
-# Shatrox Qt Image, with dev tools
-#
+# Shatrox Qt 5 Desktop Image (Xfce Desktop)
 ################################################################################
 
 require sh-rpi-core-image.bb
 
-DESCRIPTION = "Shatrox Qt Image, with dev tools"
-HOMEPAGE    = "https://github.com/shatrix/rpi_yocto_shatrix"
-SECTION     = "image"
-PR          = "r002"
+DESCRIPTION = "Shatrox Qt 5 Desktop Image with Xfce and full Qt5 stack."
+LICENSE = "MIT"
+PR = "r003"
 
-IMAGE_INSTALL += " \
-  ${QT5_PKGS} \
-  ${QT_EXAMPLES} \
+# === Re-enable GUI features ===
+DISTRO_FEATURES:append = " x11 opengl"
+DISTRO_FEATURES:remove = " wayland"
+
+# === Desktop environment packages (Xfce) ===
+DESKTOP_PKGS = " \
+    packagegroup-core-x11 \
+    packagegroup-xfce-base \
+    packagegroup-xfce-extended \
+    xf86-video-modesetting \
+    xf86-input-libinput \
+    xf86-input-evdev \
+    ttf-bitstream-vera \
 "
 
+# === Clean Qt 5 Package List ===
 QT5_PKGS = " \
-  qtbase \
-  qtbase-plugins \
-  qt3d \
-  qtcharts \
-  qtdeclarative \
-  qtserialport \
-  qtdeclarative-tools \
-  qtdeclarative-qmlplugins \
-  qtconnectivity \
-  qtgraphicaleffects \
-  qtimageformats \
-  qtlocation \
-  qtquickcontrols \
-  qtsensors \
-  qtsensors-plugins \
-  qtsystems \
-  qtmultimedia \
-  qtserialbus \
-  qtsvg \
-  qttools \
-  qtscript \
-  qtquickcontrols2 \
-  qttranslations \
-  qttranslations-qtbase \
-  qttranslations-qtdeclarative \
-  qttranslations-qtconnectivity \
-  qttranslations-qtlocation \
-  qttranslations-qtmultimedia \
-  qttranslations-qtquickcontrols \
-  qttranslations-qtserialport \
-  qttranslations-qtwebsockets \
-  qttranslations-qtxmlpatterns \
-  qtwebsockets \
-  qtwebsockets-qmlplugins \
-  qtwebchannel \
-  qtxmlpatterns \
-  qtwayland \
-  qtbase-tools \
-  qtwebchannel-qmlplugins \
-  qtvirtualkeyboard \
-  tslib \
-  tslib-conf \
-  tslib-calibrate \
-  tslib-tests \
-  ttf-bitstream-vera \
-  qt5-env \
+    qtbase \
+    qtbase-plugins \
+    qtbase-tools \
+    qtdeclarative \
+    qtdeclarative-tools \
+    qtdeclarative-qmlplugins \
+    qtgraphicaleffects \
+    qtquickcontrols \
+    qtquickcontrols2 \
+    qtimageformats \
+    qtsvg \
+    qtmultimedia \
+    qtserialport \
+    qtwebsockets \
+    qtvirtualkeyboard \
+    qtxmlpatterns \
 "
 
-QT_EXAMPLES = " \
-  cinematicexperience \
-  qt5everywheredemo \
-  qt5ledscreen \
-  qt5nmapcarousedemo \
-  qt5nmapper \
-  qt5-opengles2-test \
-  qtsmarthome \
-  quitbattery \
-  quitindicators \
-  qt5-demo-extrafiles \
+# === Image install ===
+IMAGE_INSTALL += " \
+    ${DESKTOP_PKGS} \
+    ${QT5_PKGS} \
 "
 
 export IMAGE_BASENAME = "sh-rpi-qt-image"
