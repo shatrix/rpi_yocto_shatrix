@@ -21,7 +21,8 @@ kernel.apparmor_restrict_unprivileged_userns=0
 sudo apt install build-essential chrpath cpio debianutils \
 diffstat file gawk gcc git iputils-ping libacl1 liblz4-tool \
 locales python3 python3-git python3-jinja2 python3-pexpect \
-python3-pip python3-subunit socat texinfo unzip wget xz-utils zstd
+python3-pip python3-subunit socat texinfo unzip wget xz-utils \
+zstd bmap-tools
 
 ```
 
@@ -47,7 +48,7 @@ bitbake -k sh-rpi-qt-image
 ## Flash the output image to your MicroSD Card
 Connect your microSD card to your PC, and check your card device name using 'lsblk' command
 ```bash
-sudo dd bs=4M if=tmp/deploy/images/raspberrypi5/sh-rpi-core-image.rootfs.rpi-sdimg of=/dev/sdX conv=fsync status=progress
+sudo bmaptool copy tmp/deploy/images/raspberrypi5/sh-rpi-core-image-raspberrypi5.rootfs.wic.bz2 /dev/sdX
 ```
 
 ## Depends on

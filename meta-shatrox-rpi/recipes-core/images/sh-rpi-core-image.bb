@@ -1,231 +1,144 @@
 ################################################################################
 #
-# Shatrox Basic Console Image, with dev tools
+# Shatrox Minimal Console Image for Raspberry Pi 5 (scarthgap)
+#
+# With full RPi 5 hardware support (Wi-Fi, BT, GPIO, Network).
 #
 ################################################################################
 inherit core-image
 
-DESCRIPTION = "Shatrox Basic Console Image, with dev tools"
+DESCRIPTION = "Minimal console-only image for Raspberry Pi 5 with full hardware support (systemd)."
 HOMEPAGE    = "https://github.com/shatrix/rpi_yocto_shatrix"
-SECTION     = "image"
+LICENSE     = "MIT"
 PR          = "r002"
 
-BUILDHISTORY_COMMIT        = "0"
+# Set a minimal default rootfs size 1GB
+# The 6GB extra space is for package management headroom
+IMAGE_ROOTFS_SIZE = "1048576"
+IMAGE_ROOTFS_EXTRA_SPACE = "6291456"
 
-# Base ROOTFS size 1GB
-IMAGE_ROOTFS_SIZE          = "1048576"
-# Extra space in ROOTFS 6GB
-IMAGE_ROOTFS_EXTRA_SPACE   = "6291456"
-
-IMAGE_FEATURES += "package-management dev-pkgs debug-tweaks splash"
-
-DEPENDS += "zip-native python3-pip-native"
+# Enable package management + dev debugging
+IMAGE_FEATURES += "package-management dev-pkgs debug-tweaks"
 
 IMAGE_INSTALL += " \
-  ${CORE_SHATROX} \
-  ${DEV_SDK_PKGS} \
-  ${UTILITIES_PKGS} \
-  ${WIFI_PKGS} \
-  ${OPENCV_PKGS} \
-  ${WEB_PKGS} \
-  ${BLUETOOTH_PKGS} \
+    ${CORE_SHATROX} \
+    ${NETWORK_PKGS} \
+    ${WIFI_BT_PKGS} \
+    ${GPIO_PKGS} \
+    ${DEV_MINIMAL} \
+    ${UTILITIES_MIN} \
 "
+
+################################################################################
+# CORE SYSTEM (systemd)
+################################################################################
 
 CORE_SHATROX = " \
-  ${CORE_IMAGE_EXTRA_INSTALL} \
-  packagegroup-core-boot  \
-  base-files \
-  base-passwd \
-  busybox \
-  zlib \
-  libxml2 \
-  initscripts-functions \
-  bash \
-  connman \
-  connman-plugin-ethernet \
-  tzdata \
-  kernel-modules \
-  netbase \
-  ethtool \
-  fuse \
-  sqlite3 \
-  mariadb \
-  alsa-lib  \
-  alsa-utils \
-  dbus \
-  udev \
-  glibc \
-  ntfs-3g \
-  dnsmasq \
-  acl \
-  libcap \
-  libcap-bin \
-  attr \
-  ebtables \
-  arptables \
-  fontconfig \
+    ${CORE_IMAGE_EXTRA_INSTALL} \
+    packagegroup-core-boot \
+    packagegroup-base \
+    systemd \
+    base-files \
+    base-passwd \
+    busybox \
+    bash \
+    tzdata \
+    netbase \
+    kernel-modules \
+    ethtool \
+    fuse \
+    dbus \
+    udev \
 "
 
-WEB_PKGS = " \
-  iproute2 \
-  iptables \
-  libnfnetlink \
-  curl \
-  wget \
-  libwebsockets \
-  libcrypto \
-  jansson \
-  openssl \
-  openssl-engines \
-  openssl-misc \
-  net-tools \
-  apache2 \
+################################################################################
+# Networking (systemd-native)
+################################################################################
+
+NETWORK_PKGS = " \
+    iproute2 \
+    iptables \
+    curl \
+    wget \
 "
 
-BLUETOOTH_PKGS = " \
-  ppp \
-  ppp-l2tp \
-  ppp-minconn \
-  ppp-oa \
-  ppp-oe \
-  ppp-password \
-  ppp-radius \
-  ppp-tools \
-  ppp-winbind \
+################################################################################
+# WiFi + Bluetooth stack (RPi5 BCM43455)
+################################################################################
+
+WIFI_BT_PKGS = " \
+    linux-firmware-rpidistro-bcm43455 \
+    bluez-firmware-rpidistro-bcm4345c5-hcd \
+    iw \
+    wpa-supplicant \
+    wpa-supplicant-cli \
+    hostapd \
+    bluez5 \
+    bluez5-obex \
+    bluez5-noinst-tools \
+    wireless-regdb-static \
 "
 
-OPENCV_PKGS = " \
-  libopencv-calib3d \
-  libopencv-core \
-  libopencv-features2d \
-  libopencv-flann \
-  libopencv-highgui \
-  libopencv-imgproc \
-  libopencv-ml \
-  libopencv-objdetect \
-  libopencv-photo \
-  libopencv-stitching \
-  libopencv-superres \
-  libopencv-video \
-  libopencv-videostab \
-  opencv-apps \
-  opencv \
+################################################################################
+# GPIO, I2C, SPI, UART Support
+################################################################################
+
+GPIO_PKGS = " \
+    i2c-tools \
+    libgpiod \
+    libgpiod-tools \
 "
 
-WIFI_PKGS = " \
-  iw \
-  linux-firmware-rpidistro-bcm43455 \
-  wpa-supplicant \
-  wpa-supplicant-cli \
-  wpa-supplicant-passphrase \
-  libnl \
-  libnl-nf \
-  libnl-genl \
-  libnl-route \
-  hostapd \
+################################################################################
+# Minimal Dev Tools (on-target SDK)
+################################################################################
+
+DEV_MINIMAL = " \
+    gcc \
+    g++ \
+    make \
+    gdb \
+    gdbserver \
+    pkgconfig \
+    python3 \
+    python3-pip \
 "
 
-DEV_SDK_PKGS = " \
-  binutils \
-  binutils-symlinks \
-  coreutils \
-  cpp \
-  cpp-symlinks \
-  diffutils \
-  elfutils elfutils-binutils \
-  file \
-  g++ \
-  g++-symlinks \
-  gcc \
-  gcc-symlinks \
-  gdb \
-  gdbserver \
-  gettext \
-  git \
-  ldd \
-  libstdc++ \
-  libstdc++-dev \
-  libtool \
-  ltrace \
-  make \
-  pkgconfig \
-  python3 \
-  python3-modules \
-  python3-pip \
-  strace \
-  readline \
+################################################################################
+# Minimal Utilities for troubleshooting
+################################################################################
+
+UTILITIES_MIN = " \
+    bzip2 \
+    tar \
+    unzip \
+    xz \
+    nano \
+    htop \
+    iputils \
+    traceroute \
+    usbutils \
+    procps \
+    rsync \
 "
 
-UTILITIES_PKGS = " \
-  bzip2 \
-  tar \
-  devmem2 \
-  dosfstools \
-  ethtool \
-  fbset \
-  findutils \
-  grep \
-  i2c-tools \
-  iperf3 \
-  less \
-  lsof \
-  nano \
-  texinfo \
-  usbutils \
-  xz \
-  watchdog \
-  netcat-openbsd \
-  nmap \
-  ntp ntp-tickadj \
-  procps \
-  rng-tools \
-  sysfsutils \
-  tcpdump \
-  unzip \
-  util-linux \
-  zip \
-  opkg \
-  opkg-utils \
-  nfs-utils \
-  nfs-utils-client \
-  libusb1 \
-  rsync \
-  e2fsprogs \
-  e2fsprogs-e2fsck \
-  e2fsprogs-mke2fs \
-  e2fsprogs-tune2fs \
-  fontconfig-utils \
-  libunwind \
-  linuxptp \
-  smartmontools \
-  gperftools \
-  cpprest \
-  libwebsockets \
-  asio \
-  libflac \
-  libsndfile1 \
-  libogg \
-  gstreamer1.0 \
-  gstreamer1.0-plugins-good-isomp4 \
-  gstreamer1.0-plugins-base-videoconvert \
-  gstreamer1.0-plugins-base-app \
-  gstreamer1.0-plugins-bad-videoparsersbad \
-  gconf \
-  libpng \
-  tiff \
-  htop \
-  iputils \
-  traceroute \
-  ncurses-terminfo \
-"
+################################################################################
+# POST PROCESS
+################################################################################
+
+# Enable systemd networking by default
+SYSTEMD_DEFAULT_TARGET = "multi-user.target"
+SYSTEMD_PACKAGES = "packagegroup-core-boot"
+SYSTEMD_SERVICE:${PN}:append = " systemd-networkd.service systemd-resolved.service"
 
 set_local_timezone_UTC() {
-  ln -sf /usr/share/zoneinfo/UTC ${IMAGE_ROOTFS}/etc/localtime
+    ln -sf /usr/share/zoneinfo/UTC ${IMAGE_ROOTFS}/etc/localtime
 }
 
 ROOTFS_POSTPROCESS_COMMAND += " \
-  set_local_timezone_UTC ; \
-  write_image_manifest ; \
+    set_local_timezone_UTC; \
+    write_image_manifest; \
 "
 
+################################################################################
 export IMAGE_BASENAME = "sh-rpi-core-image"

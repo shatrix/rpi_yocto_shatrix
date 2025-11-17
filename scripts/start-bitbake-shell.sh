@@ -45,6 +45,9 @@ check_and_add_bblayer 'meta-perl' 'meta-openembedded/meta-perl'
 check_and_add_bblayer 'meta-python' 'meta-openembedded/meta-python'
 check_and_add_bblayer 'meta-webserver' 'meta-openembedded/meta-webserver'
 check_and_add_bblayer 'meta-filesystems' 'meta-openembedded/meta-filesystems'
+check_and_add_bblayer 'meta-xfce' 'meta-openembedded/meta-xfce'
+check_and_add_bblayer 'meta-gnome' 'meta-openembedded/meta-gnome'
+check_and_add_bblayer 'meta-initramfs' 'meta-openembedded/meta-initramfs'
 check_and_add_bblayer 'meta-shatrox-rpi' '../meta-shatrox-rpi'
 
 # Print more help for the user
