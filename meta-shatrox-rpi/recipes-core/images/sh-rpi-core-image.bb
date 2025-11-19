@@ -116,6 +116,7 @@ UTILITIES_MIN = " \
     xz \
     nano \
     htop \
+    btop \
     iputils \
     traceroute \
     usbutils \
