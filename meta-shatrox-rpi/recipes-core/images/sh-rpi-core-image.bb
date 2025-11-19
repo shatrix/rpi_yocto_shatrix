@@ -12,8 +12,10 @@ HOMEPAGE    = "https://github.com/shatrix/rpi_yocto_shatrix"
 LICENSE     = "MIT"
 PR          = "r002"
 
+# Essential features
 IMAGE_FEATURES += "package-management dev-pkgs debug-tweaks ssh-server-openssh"
 
+# [VERIFIED] Hardware & Networking Packages
 IMAGE_INSTALL += " \
     ${CORE_SHATROX} \
     ${NETWORK_PKGS} \
@@ -52,7 +54,6 @@ CORE_SHATROX = " \
 
 NETWORK_PKGS = " \
     networkmanager \
-    networkmanager-nmtui \
     iproute2 \
     iptables \
     curl \
@@ -60,12 +61,11 @@ NETWORK_PKGS = " \
 "
 
 ################################################################################
-# WiFi + Bluetooth stack (RPi5 BCM43455 + BCM2712)
+# WiFi + Bluetooth stack
 ################################################################################
 
 WIFI_BT_PKGS = " \
     linux-firmware-rpidistro-bcm43455 \
-    linux-firmware-rpidistro-bcm2712 \
     bluez-firmware-rpidistro-bcm4345c5-hcd \
     iw \
     wpa-supplicant \
@@ -84,21 +84,16 @@ GPIO_PKGS = " \
     i2c-tools \
     libgpiod \
     libgpiod-tools \
-    libgpiod-python3 \
+    python3-gpiod \
     raspi-gpio \
-    bcm2835 \
-    python3-rpi-gpio \
+    rpi-gpio \
     python3-spidev \
-    python3-gpiozero \
 "
 
 ################################################################################
-# Minimal Dev Tools (on-target SDK)
+# Minimal Dev Tools
 ################################################################################
 
-# [IMPROVEMENT: Condensed Dev Tools]
-# Replaced manual list (gcc, make, etc) with packagegroup-core-buildessential
-# to ensure all C++ headers and symlinks work correctly.
 DEV_MINIMAL = " \
     packagegroup-core-buildessential \
     git \
@@ -111,7 +106,7 @@ DEV_MINIMAL = " \
 "
 
 ################################################################################
-# Minimal Utilities for troubleshooting
+# Minimal Utilities
 ################################################################################
 
 UTILITIES_MIN = " \
@@ -139,7 +134,7 @@ set_local_timezone_UTC() {
 
 ROOTFS_POSTPROCESS_COMMAND += " \
     set_local_timezone_UTC; \
+    write_image_manifest; \
 "
 
-################################################################################
 export IMAGE_BASENAME = "sh-rpi-core-image"
