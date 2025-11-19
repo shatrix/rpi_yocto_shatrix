@@ -12,13 +12,7 @@ HOMEPAGE    = "https://github.com/shatrix/rpi_yocto_shatrix"
 LICENSE     = "MIT"
 PR          = "r002"
 
-# Set a minimal default rootfs size 1GB
-# The 1GB extra space is for package management headroom
-IMAGE_ROOTFS_SIZE = "1048576"
-IMAGE_ROOTFS_EXTRA_SPACE = "1048576"
-
-# Enable package management + dev debugging
-IMAGE_FEATURES += "package-management dev-pkgs debug-tweaks"
+IMAGE_FEATURES += "package-management dev-pkgs debug-tweaks ssh-server-openssh"
 
 IMAGE_INSTALL += " \
     ${CORE_SHATROX} \
@@ -49,13 +43,16 @@ CORE_SHATROX = " \
     fuse \
     dbus \
     udev \
+    udev-rules-rpi \
 "
 
 ################################################################################
-# Networking (systemd-native)
+# Networking
 ################################################################################
 
 NETWORK_PKGS = " \
+    networkmanager \
+    networkmanager-nmtui \
     iproute2 \
     iptables \
     curl \
@@ -63,15 +60,15 @@ NETWORK_PKGS = " \
 "
 
 ################################################################################
-# WiFi + Bluetooth stack (RPi5 BCM43455)
+# WiFi + Bluetooth stack (RPi5 BCM43455 + BCM2712)
 ################################################################################
 
 WIFI_BT_PKGS = " \
     linux-firmware-rpidistro-bcm43455 \
+    linux-firmware-rpidistro-bcm2712 \
     bluez-firmware-rpidistro-bcm4345c5-hcd \
     iw \
     wpa-supplicant \
-    wpa-supplicant-cli \
     hostapd \
     bluez5 \
     bluez5-obex \
@@ -87,21 +84,30 @@ GPIO_PKGS = " \
     i2c-tools \
     libgpiod \
     libgpiod-tools \
+    libgpiod-python3 \
+    raspi-gpio \
+    bcm2835 \
+    python3-rpi-gpio \
+    python3-spidev \
+    python3-gpiozero \
 "
 
 ################################################################################
 # Minimal Dev Tools (on-target SDK)
 ################################################################################
 
+# [IMPROVEMENT: Condensed Dev Tools]
+# Replaced manual list (gcc, make, etc) with packagegroup-core-buildessential
+# to ensure all C++ headers and symlinks work correctly.
 DEV_MINIMAL = " \
-    gcc \
-    g++ \
-    make \
-    gdb \
-    gdbserver \
+    packagegroup-core-buildessential \
+    git \
     pkgconfig \
     python3 \
     python3-pip \
+    python3-modules \
+    gdb \
+    gdbserver \
 "
 
 ################################################################################
@@ -120,16 +126,12 @@ UTILITIES_MIN = " \
     usbutils \
     procps \
     rsync \
+    vim \
 "
 
 ################################################################################
 # POST PROCESS
 ################################################################################
-
-# Enable systemd networking by default
-SYSTEMD_DEFAULT_TARGET = "multi-user.target"
-SYSTEMD_PACKAGES = "packagegroup-core-boot"
-SYSTEMD_SERVICE:${PN}:append = " systemd-networkd.service systemd-resolved.service"
 
 set_local_timezone_UTC() {
     ln -sf /usr/share/zoneinfo/UTC ${IMAGE_ROOTFS}/etc/localtime
@@ -137,7 +139,6 @@ set_local_timezone_UTC() {
 
 ROOTFS_POSTPROCESS_COMMAND += " \
     set_local_timezone_UTC; \
-    write_image_manifest; \
 "
 
 ################################################################################
