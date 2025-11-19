@@ -132,9 +132,6 @@ set_local_timezone_UTC() {
     ln -sf /usr/share/zoneinfo/UTC ${IMAGE_ROOTFS}/etc/localtime
 }
 
-ROOTFS_POSTPROCESS_COMMAND += " \
-    set_local_timezone_UTC; \
-    write_image_manifest; \
-"
+ROOTFS_POSTPROCESS_COMMAND += "set_local_timezone_UTC; "
 
 export IMAGE_BASENAME = "sh-rpi-core-image"
