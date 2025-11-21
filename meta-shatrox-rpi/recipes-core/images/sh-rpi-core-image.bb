@@ -12,6 +12,20 @@ HOMEPAGE    = "https://github.com/shatrix/rpi_yocto_shatrix"
 LICENSE     = "MIT"
 PR          = "r002"
 
+################################################################################
+# Locale Configuration
+################################################################################
+
+# Set system language to English (US)
+IMAGE_LINGUAS = "en-us"
+
+# Set default locale to en_US.UTF-8
+GLIBC_GENERATE_LOCALES = "en_US.UTF-8"
+IMAGE_LINGUAS_SUPPLEMENTAL = ""
+
+# Ensure UTF-8 encoding is used
+DEFAULT_TIMEZONE = "UTC"
+
 # Essential features
 IMAGE_FEATURES += "package-management dev-pkgs debug-tweaks ssh-server-openssh"
 
@@ -23,6 +37,7 @@ IMAGE_INSTALL += " \
     ${GPIO_PKGS} \
     ${DEV_MINIMAL} \
     ${UTILITIES_MIN} \
+    ${TTS_PKGS} \
 "
 
 ################################################################################
@@ -46,6 +61,8 @@ CORE_SHATROX = " \
     dbus \
     udev \
     udev-rules-rpi \
+    glibc-utils \
+    locale-base-en-us \
 "
 
 ################################################################################
@@ -127,6 +144,16 @@ UTILITIES_MIN = " \
 "
 
 ################################################################################
+# Text-to-Speech
+################################################################################
+
+TTS_PKGS = " \
+    espeak \
+    alsa-utils \
+    startup-sound-service \
+"
+
+################################################################################
 # POST PROCESS
 ################################################################################
 
@@ -134,6 +161,16 @@ set_local_timezone_UTC() {
     ln -sf /usr/share/zoneinfo/UTC ${IMAGE_ROOTFS}/etc/localtime
 }
 
-ROOTFS_POSTPROCESS_COMMAND += "set_local_timezone_UTC; "
+set_locale_en_US_UTF8() {
+    # Set system-wide locale to en_US.UTF-8
+    echo 'LANG=en_US.UTF-8' >> ${IMAGE_ROOTFS}/etc/environment
+    echo 'LC_ALL=en_US.UTF-8' >> ${IMAGE_ROOTFS}/etc/environment
+    
+    # Also set in locale.conf for systemd
+    install -d ${IMAGE_ROOTFS}/etc
+    echo 'LANG=en_US.UTF-8' > ${IMAGE_ROOTFS}/etc/locale.conf
+}
+
+ROOTFS_POSTPROCESS_COMMAND += "set_local_timezone_UTC; set_locale_en_US_UTF8; "
 
 export IMAGE_BASENAME = "sh-rpi-core-image"
