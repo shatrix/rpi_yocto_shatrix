@@ -1,0 +1,36 @@
+[Unit]
+Description=Llama.cpp HTTP Server for AI Inference
+Documentation=https://github.com/ggerganov/llama.cpp
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/usr/share/llama-models
+
+# Start llama-server with optimized settings for RPi5 (4GB RAM)
+ExecStart=/usr/bin/llama-server \
+    --model /usr/share/llama-models/default \
+    --host 127.0.0.1 \
+    --port 8080 \
+    --ctx-size 2048 \
+    --threads 4 \
+    --batch-size 512 \
+    --n-predict 512
+
+# Restart on failure
+Restart=on-failure
+RestartSec=5s
+
+# Resource limits
+MemoryMax=2G
+CPUQuota=400%
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=llama-server
+
+[Install]
+WantedBy=multi-user.target

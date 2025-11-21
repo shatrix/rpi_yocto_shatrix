@@ -1,25 +1,18 @@
 #!/bin/bash
 ################################################################################
 # llama-ask - Voice-interactive AI assistant for Raspberry Pi
-# Asks the LLM a question and speaks the response
+# Uses llama-server HTTP API for fast responses
 ################################################################################
 
 MODEL_DIR="/usr/share/llama-models"
 DEFAULT_MODEL="$MODEL_DIR/default"
 SILENT_MODE=0
+SERVER_URL="http://127.0.0.1:8080"
 
 # Check for --silent flag
 if [ "$1" = "--silent" ]; then
     SILENT_MODE=1
     shift
-fi
-
-# Check if model exists
-if [ ! -f "$DEFAULT_MODEL" ]; then
-    echo "Error: Default model not found at $DEFAULT_MODEL"
-    echo "Available models:"
-    ls -lh "$MODEL_DIR"/*.gguf 2>/dev/null || echo "No models found"
-    exit 1
 fi
 
 # Check if prompt provided
@@ -35,42 +28,54 @@ fi
 # Combine all arguments as prompt
 PROMPT="$*"
 
-# Temporary file for the response
-RESPONSE_FILE=$(mktemp)
-trap "rm -f $RESPONSE_FILE" EXIT
-
 echo "🤖 Asking AI: $PROMPT"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-# Run llama-cli and capture output
-/usr/bin/llama-cli \
-    -m "$DEFAULT_MODEL" \
-    -p "$PROMPT" \
-    --ctx-size 2048 \
-    --n-predict 256 \
-    --temp 0.7 \
-    --top-k 40 \
-    --top-p 0.9 \
-    --threads 4 \
-    --no-mmap \
-    --simple-io 2>/dev/null | tee "$RESPONSE_FILE"
+# Check if llama-server is running
+if ! curl -s "$SERVER_URL/health" >/dev/null 2>&1; then
+    echo "⚠️  llama-server is not running. Starting server..."
+    echo "   This may take a few seconds..."
+    
+    # Fallback to direct llama-cli if server not available
+    RESPONSE=$(echo "$PROMPT" | /usr/bin/llama-cli \
+        -m "$DEFAULT_MODEL" \
+        --n-predict 256 \
+        --temp 0.7 \
+        --top-k 40 \
+        --top-p 0.9 \
+        --threads 4 \
+        2>/dev/null | \
+        grep "^>" | \
+        grep -v "EOF by user" | \
+        sed 's/^> //')
+else
+    # Use HTTP API for fast response
+    RESPONSE=$(curl -s "$SERVER_URL/completion" \
+        -H "Content-Type: application/json" \
+        -d "{
+            \"prompt\": \"$PROMPT\",
+            \"n_predict\": 80,
+            \"temperature\": 0.7,
+            \"top_k\": 40,
+            \"top_p\": 0.9,
+            \"stream\": false
+        }" | sed 's/.*"content":"\([^"]*\)".*/\1/' | sed 's/\\n/\n/g')
+fi
 
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-
-# Check if we got a response
-if [ ! -s "$RESPONSE_FILE" ]; then
+if [ -z "$RESPONSE" ]; then
     echo "Error: No response from AI"
     exit 1
 fi
 
+echo "$RESPONSE"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
 # Speak the response if not in silent mode
 if [ $SILENT_MODE -eq 0 ]; then
     if command -v speak >/dev/null 2>&1; then
+        echo ""
         echo "🔊 Speaking response..."
-        # Read the response and speak it
-        # Clean up the response: remove the prompt echo and extra whitespace
-        CLEAN_RESPONSE=$(cat "$RESPONSE_FILE" | sed 's/^[[:space:]]*//' | sed '/^$/d')
-        speak "$CLEAN_RESPONSE"
+        speak "$RESPONSE"
     else
         echo "Warning: 'speak' command not found, skipping voice output"
     fi

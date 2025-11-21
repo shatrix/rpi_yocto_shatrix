@@ -18,7 +18,8 @@ SHATROX is a custom Poky-based distribution for Raspberry Pi boards, optimized f
 - **AI Capabilities** (AI image only):
   - llama.cpp for efficient CPU-based LLM inference
   - Pre-quantized Qwen2.5-1.5B model (optimized for 4GB RAM)
-  - HTTP API server for chat completions
+  - Auto-start HTTP API server (llama-server) for instant responses
+  - Voice-interactive assistant (`llama-ask`) with TTS integration
   - Helper scripts: `llama-server-start`, `llama-quick-start`
 
 - **Hardware Support**:
@@ -127,16 +128,47 @@ speak "System is ready"
 
 ### AI Commands (AI image only)
 
-**Quick inference:**
+The AI image includes **llama-server** which auto-starts on boot, keeping the model loaded in RAM for fast responses.
+
+**Voice-interactive AI assistant:**
 ```bash
-llama-quick-start "What is Raspberry Pi?"
+llama-ask "What is Raspberry Pi?"
+# AI responds with text and speaks the answer (2-5 seconds)
+
+llama-ask --silent "Explain Linux kernel"
+# AI responds with text only (no voice)
 ```
 
-**Start HTTP API server:**
+**Direct LLM inference (legacy):**
 ```bash
+llama-quick-start "What is Raspberry Pi?"
+# Slower: reloads model each time (10-15 seconds)
+```
+
+**Server management:**
+```bash
+# Check server status
+systemctl status llama-server
+
+# View server logs
+journalctl -u llama-server -f
+
+# Restart server
+systemctl restart llama-server
+
+# Manual start (if not using systemd)
 llama-server-start
-# Server runs on http://<rpi-ip>:8080
-# API endpoint: http://<rpi-ip>:8080/v1/chat/completions
+```
+
+**HTTP API access:**
+```bash
+# Server runs on http://localhost:8080
+curl http://localhost:8080/health
+
+# Completion endpoint
+curl http://localhost:8080/completion \
+  -H "Content-Type: application/json" \
+  -d '{"prompt": "Hello", "n_predict": 100}'
 ```
 
 ## Dependencies

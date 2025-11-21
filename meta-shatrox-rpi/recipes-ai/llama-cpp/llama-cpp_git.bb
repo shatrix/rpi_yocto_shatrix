@@ -10,6 +10,7 @@ SRC_URI = "git://github.com/ggerganov/llama.cpp.git;protocol=https;branch=master
            file://llama-quick-start \
            file://llama-server-start \
            file://llama-ask \
+           file://llama-server.service \
 "
 
 # Use latest stable tag (b4360 is recent stable, adjust as needed)
@@ -17,7 +18,7 @@ SRCREV = "${AUTOREV}"
 
 S = "${WORKDIR}/git"
 
-inherit cmake pkgconfig
+inherit cmake pkgconfig systemd
 
 # Build configuration for Raspberry Pi 5 (ARM Cortex-A76)
 # Optimize for CPU inference, no GPU support
@@ -49,6 +50,10 @@ do_install:append() {
     install -m 0755 ${WORKDIR}/llama-server-start ${D}${bindir}/
     install -m 0755 ${WORKDIR}/llama-ask ${D}${bindir}/
     
+    # Install systemd service for llama-server auto-start
+    install -d ${D}${systemd_system_unitdir}
+    install -m 0644 ${WORKDIR}/llama-server.service ${D}${systemd_system_unitdir}/
+    
     # Create directory for models (will be populated by llama-models recipe)
     install -d ${D}${datadir}/llama-models
 }
@@ -69,6 +74,7 @@ FILES:${PN} = " \
 FILES:${PN}-server = " \
     ${bindir}/llama-server \
     ${bindir}/llama-server-start \
+    ${systemd_system_unitdir}/llama-server.service \
 "
 
 FILES:${PN}-tools = " \
@@ -83,9 +89,13 @@ FILES:${PN}-dev = " \
     ${libdir}/cmake \
 "
 
-RDEPENDS:${PN} = "libstdc++"
-RDEPENDS:${PN}-server = "${PN} libstdc++ bash"
-RDEPENDS:${PN}-tools = "${PN} bash"
+RDEPENDS:${PN} = "libstdc++ curl"
+RDEPENDS:${PN}-server = "${PN} libstdc++ bash curl"
+RDEPENDS:${PN}-tools = "${PN} bash curl"
+
+# Systemd service configuration
+SYSTEMD_SERVICE:${PN}-server = "llama-server.service"
+SYSTEMD_AUTO_ENABLE:${PN}-server = "enable"
 
 # Ensure we have enough tmp space for compilation
 INHIBIT_PACKAGE_STRIP = "0"
