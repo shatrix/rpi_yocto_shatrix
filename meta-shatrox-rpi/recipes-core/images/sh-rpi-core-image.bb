@@ -150,6 +150,7 @@ UTILITIES_MIN = " \
 TTS_PKGS = " \
     espeak \
     alsa-utils \
+    alsa-config \
     startup-sound-service \
 "
 
