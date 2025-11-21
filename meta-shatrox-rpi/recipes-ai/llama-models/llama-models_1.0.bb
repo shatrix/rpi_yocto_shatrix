@@ -11,9 +11,7 @@ SRC_URI = "https://huggingface.co/bartowski/Qwen2.5-1.5B-Instruct-GGUF/resolve/m
 "
 
 # SHA256 checksum for the model file
-# Note: You may need to update this checksum when the model is updated
-# Skip checksum for now and verify manually after first download
-SRC_URI[qwen.sha256sum] = ""
+SRC_URI[qwen.sha256sum] = "1adf0b11065d8ad2e8123ea110d1ec956dab4ab038eab665614adba04b6c3370"
 
 # This is a binary model file, no compilation needed
 S = "${WORKDIR}"

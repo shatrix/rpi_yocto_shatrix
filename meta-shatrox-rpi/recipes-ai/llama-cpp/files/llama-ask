@@ -1,0 +1,79 @@
+#!/bin/bash
+################################################################################
+# llama-ask - Voice-interactive AI assistant for Raspberry Pi
+# Asks the LLM a question and speaks the response
+################################################################################
+
+MODEL_DIR="/usr/share/llama-models"
+DEFAULT_MODEL="$MODEL_DIR/default"
+SILENT_MODE=0
+
+# Check for --silent flag
+if [ "$1" = "--silent" ]; then
+    SILENT_MODE=1
+    shift
+fi
+
+# Check if model exists
+if [ ! -f "$DEFAULT_MODEL" ]; then
+    echo "Error: Default model not found at $DEFAULT_MODEL"
+    echo "Available models:"
+    ls -lh "$MODEL_DIR"/*.gguf 2>/dev/null || echo "No models found"
+    exit 1
+fi
+
+# Check if prompt provided
+if [ $# -eq 0 ]; then
+    echo "Usage: llama-ask [--silent] \"Your question here\""
+    echo "Example: llama-ask \"What is Raspberry Pi?\""
+    echo ""
+    echo "The AI will respond with text and voice."
+    echo "Use --silent to disable voice output."
+    exit 1
+fi
+
+# Combine all arguments as prompt
+PROMPT="$*"
+
+# Temporary file for the response
+RESPONSE_FILE=$(mktemp)
+trap "rm -f $RESPONSE_FILE" EXIT
+
+echo "🤖 Asking AI: $PROMPT"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+# Run llama-cli and capture output
+/usr/bin/llama-cli \
+    -m "$DEFAULT_MODEL" \
+    -p "$PROMPT" \
+    --ctx-size 2048 \
+    --n-predict 256 \
+    --temp 0.7 \
+    --top-k 40 \
+    --top-p 0.9 \
+    --threads 4 \
+    --no-mmap \
+    --simple-io 2>/dev/null | tee "$RESPONSE_FILE"
+
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+# Check if we got a response
+if [ ! -s "$RESPONSE_FILE" ]; then
+    echo "Error: No response from AI"
+    exit 1
+fi
+
+# Speak the response if not in silent mode
+if [ $SILENT_MODE -eq 0 ]; then
+    if command -v speak >/dev/null 2>&1; then
+        echo "🔊 Speaking response..."
+        # Read the response and speak it
+        # Clean up the response: remove the prompt echo and extra whitespace
+        CLEAN_RESPONSE=$(cat "$RESPONSE_FILE" | sed 's/^[[:space:]]*//' | sed '/^$/d')
+        speak "$CLEAN_RESPONSE"
+    else
+        echo "Warning: 'speak' command not found, skipping voice output"
+    fi
+fi
+
+exit 0

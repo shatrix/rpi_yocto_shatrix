@@ -21,7 +21,7 @@ echo "Playing startup message: ${MESSAGE}"
 # espeak outputs to stdout, aplay plays it with format conversion
 # -s: speed (words per minute, default 175)
 # -v: voice variant
-espeak --stdout -s 150 -v en-us+m1 "${MESSAGE}" 2>&1 | \
+espeak --stdout -s 120 -v en-us+m3 "${MESSAGE}" 2>&1 | \
     aplay -D"${AUDIO_DEVICE}" 2>&1 | logger -t startup-sound
 
 # Exit successfully

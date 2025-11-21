@@ -2,13 +2,14 @@ SUMMARY = "llama.cpp - LLM inference in C/C++"
 DESCRIPTION = "Port of Facebook's LLaMA model in C/C++ for efficient CPU inference"
 HOMEPAGE = "https://github.com/ggerganov/llama.cpp"
 LICENSE = "MIT"
-LIC_FILES_CHKSUM = "file://LICENSE;md5=042991f017d3b6f70f509fe903f31e4e"
+LIC_FILES_CHKSUM = "file://LICENSE;md5=1539dadbedb60aa18519febfeab70632"
 
 DEPENDS = "cmake-native"
 
 SRC_URI = "git://github.com/ggerganov/llama.cpp.git;protocol=https;branch=master \
            file://llama-quick-start \
            file://llama-server-start \
+           file://llama-ask \
 "
 
 # Use latest stable tag (b4360 is recent stable, adjust as needed)
@@ -34,6 +35,7 @@ EXTRA_OECMAKE = " \
     -DLLAMA_BUILD_TESTS=OFF \
     -DLLAMA_BUILD_EXAMPLES=ON \
     -DLLAMA_BUILD_SERVER=ON \
+    -DLLAMA_CURL=OFF \
     -DCMAKE_BUILD_TYPE=Release \
 "
 
@@ -45,6 +47,7 @@ do_install:append() {
     install -d ${D}${bindir}
     install -m 0755 ${WORKDIR}/llama-quick-start ${D}${bindir}/
     install -m 0755 ${WORKDIR}/llama-server-start ${D}${bindir}/
+    install -m 0755 ${WORKDIR}/llama-ask ${D}${bindir}/
     
     # Create directory for models (will be populated by llama-models recipe)
     install -d ${D}${datadir}/llama-models
@@ -57,6 +60,9 @@ FILES:${PN} = " \
     ${bindir}/llama-quick-start \
     ${libdir}/libllama.so.* \
     ${libdir}/libggml.so.* \
+    ${libdir}/libggml-cpu.so.* \
+    ${libdir}/libggml-base.so.* \
+    ${libdir}/libmtmd.so.* \
     ${datadir}/llama-models \
 "
 
@@ -67,16 +73,19 @@ FILES:${PN}-server = " \
 
 FILES:${PN}-tools = " \
     ${bindir}/llama-* \
+    ${bindir}/convert_hf_to_gguf.py \
 "
 
 FILES:${PN}-dev = " \
     ${includedir}/* \
     ${libdir}/*.so \
     ${libdir}/pkgconfig \
+    ${libdir}/cmake \
 "
 
 RDEPENDS:${PN} = "libstdc++"
-RDEPENDS:${PN}-server = "${PN} libstdc++"
+RDEPENDS:${PN}-server = "${PN} libstdc++ bash"
+RDEPENDS:${PN}-tools = "${PN} bash"
 
 # Ensure we have enough tmp space for compilation
 INHIBIT_PACKAGE_STRIP = "0"

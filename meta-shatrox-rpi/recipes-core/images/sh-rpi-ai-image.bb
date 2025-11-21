@@ -23,6 +23,8 @@ IMAGE_INSTALL += " \
 
 AI_PKGS = " \
     llama-cpp \
+    llama-cpp-server \
+    llama-cpp-tools \
     llama-models \
     python3-numpy \
     cmake \
