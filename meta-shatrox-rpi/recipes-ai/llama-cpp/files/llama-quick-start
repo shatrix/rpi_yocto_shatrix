@@ -1,0 +1,44 @@
+#!/bin/bash
+################################################################################
+# llama-quick-start - Quick inference helper for Raspberry Pi
+################################################################################
+
+MODEL_DIR="/usr/share/llama-models"
+DEFAULT_MODEL="$MODEL_DIR/default"
+
+# Check if model exists
+if [ ! -f "$DEFAULT_MODEL" ]; then
+    echo "Error: Default model not found at $DEFAULT_MODEL"
+    echo "Available models:"
+    ls -lh "$MODEL_DIR"/*.gguf 2>/dev/null || echo "No models found"
+    exit 1
+fi
+
+# Check if prompt provided
+if [ $# -eq 0 ]; then
+    echo "Usage: llama-quick-start \"Your prompt here\""
+    echo "Example: llama-quick-start \"What is Raspberry Pi?\""
+    exit 1
+fi
+
+# Combine all arguments as prompt
+PROMPT="$*"
+
+echo "Using model: $DEFAULT_MODEL"
+echo "Prompt: $PROMPT"
+echo "----------------------------------------"
+
+# Run llama-cli with optimized settings for 4GB RAM
+/usr/bin/llama-cli \
+    -m "$DEFAULT_MODEL" \
+    -p "$PROMPT" \
+    --ctx-size 2048 \
+    --n-predict 256 \
+    --temp 0.7 \
+    --top-k 40 \
+    --top-p 0.9 \
+    --threads 4 \
+    --no-mmap \
+    --simple-io
+
+exit $?
