@@ -1,6 +1,31 @@
-# Description
-SHATROX is a custom Poky distribution for RaspberryPi boards
-Can be used as a base for any IoT/Embedded projects
+# SHATROX - Raspberry Pi Yocto Distribution
+
+SHATROX is a custom Poky-based distribution for Raspberry Pi boards, optimized for IoT and embedded projects.
+
+## Features
+
+- **Multiple Image Variants**:
+  - `sh-rpi-core-image`: Minimal console image with full hardware support
+  - `sh-rpi-qt-image`: Qt5 EGLFS image for GUI applications
+  - `sh-rpi-ai-image`: AI-enabled image with on-device LLM inference (llama.cpp + Qwen2.5-1.5B)
+
+- **Text-to-Speech (TTS)**:
+  - Built-in espeak text-to-speech engine
+  - Auto-configured ALSA audio for USB Audio devices
+  - Startup sound service that announces "System online" on boot
+  - `speak` command-line utility for easy TTS from terminal
+
+- **AI Capabilities** (AI image only):
+  - llama.cpp for efficient CPU-based LLM inference
+  - Pre-quantized Qwen2.5-1.5B model (optimized for 4GB RAM)
+  - HTTP API server for chat completions
+  - Helper scripts: `llama-server-start`, `llama-quick-start`
+
+- **Hardware Support**:
+  - Raspberry Pi 5 (primary target)
+  - Wi-Fi, Bluetooth, GPIO, I2C, SPI, UART
+  - USB Audio device support
+  - HDMI display support
 
 ## Prerequisites
 This project is based on Yocto Project 5.0 (scarthgap)
@@ -32,37 +57,100 @@ git clone --recursive https://github.com/shatrix/rpi_yocto_shatrix.git
 ```
 
 ## Build SHATROX Distro for RaspberryPi
+
 ```bash
 cd rpi_yocto_shatrix
 ./scripts/start-bitbake-shell.sh
 ```
-Start building the SHATROX basic image with this cmd
+
+### Build Options
+
+Choose the image that fits your needs:
+
+**1. Core Console Image** (Minimal, ~500MB):
 ```bash
 bitbake -k sh-rpi-core-image
 ```
-Or build the SHATROX Qt image with this cmd
+Includes: systemd, networking, WiFi/BT, GPIO, TTS, development tools
+
+**2. Qt5 EGLFS Image** (GUI support, ~800MB):
 ```bash
 bitbake -k sh-rpi-qt-image
 ```
+Includes: Everything from core + Qt5 libraries and EGLFS support
 
-## Flash the output image to your MicroSD Card
-Connect your microSD card to your PC, and check your card device name using 'lsblk' command
+**3. AI Image** (LLM inference, ~2GB):
 ```bash
-sudo bmaptool copy tmp/deploy/images/raspberrypi5/sh-rpi-core-image-raspberrypi5.rootfs.wic.bz2 /dev/sdX
+bitbake -k sh-rpi-ai-image
+```
+Includes: Everything from core + llama.cpp + Qwen2.5-1.5B model
+
+## Flash the Image to MicroSD Card
+
+1. Connect your microSD card to your PC
+2. Check your card device name:
+   ```bash
+   lsblk
+   ```
+3. Flash the image (replace `/dev/sdX` with your actual device, e.g., `/dev/sdb`):
+
+   **Core Image:**
+   ```bash
+   sudo bmaptool copy tmp/deploy/images/raspberrypi5/sh-rpi-core-image-raspberrypi5.rootfs.wic.bz2 /dev/sdX
+   ```
+
+   **Qt Image:**
+   ```bash
+   sudo bmaptool copy tmp/deploy/images/raspberrypi5/sh-rpi-qt-image-raspberrypi5.rootfs.wic.bz2 /dev/sdX
+   ```
+
+   **AI Image:**
+   ```bash
+   sudo bmaptool copy tmp/deploy/images/raspberrypi5/sh-rpi-ai-image-raspberrypi5.rootfs.wic.bz2 /dev/sdX
+   ```
+
+⚠️ **Warning:** Double-check the device name! This will erase all data on the target device.
+
+## Using the Image
+
+### Default Credentials
+- Username: `root`
+- Password: (none - direct login)
+
+### TTS Commands
+
+Use the `speak` command from anywhere:
+```bash
+speak "Hello world"
+speak "System is ready"
 ```
 
-## Depends on
-URI: git://git.yoctoproject.org/poky.git
-branch: scarthgap
+### AI Commands (AI image only)
 
-URI: git://git.openembedded.org/meta-openembedded
-branch: scarthgap
+**Quick inference:**
+```bash
+llama-quick-start "What is Raspberry Pi?"
+```
 
-URI: https://github.com/meta-qt5/meta-qt5
-branch: scarthgap
+**Start HTTP API server:**
+```bash
+llama-server-start
+# Server runs on http://<rpi-ip>:8080
+# API endpoint: http://<rpi-ip>:8080/v1/chat/completions
+```
 
-URI: git://git.yoctoproject.org/meta-raspberrypi
-branch: scarthgap
+## Dependencies
+
+This project depends on the following Yocto layers:
+
+| Layer | URI | Branch |
+|-------|-----|--------|
+| poky | git://git.yoctoproject.org/poky.git | scarthgap |
+| meta-openembedded | git://git.openembedded.org/meta-openembedded | scarthgap |
+| meta-qt5 | https://github.com/meta-qt5/meta-qt5 | scarthgap |
+| meta-raspberrypi | git://git.yoctoproject.org/meta-raspberrypi | scarthgap |
+
+All dependencies are included as git submodules and will be fetched automatically with `git clone --recursive`.
 
 
 ## Contributing

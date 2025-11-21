@@ -1,0 +1,14 @@
+[Unit]
+Description=Startup Sound Service
+After=sound.target systemd-user-sessions.service
+Wants=sound.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/startup-sound.sh
+RemainAfterExit=no
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
