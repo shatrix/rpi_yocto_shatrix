@@ -6,12 +6,13 @@
 MODEL_DIR="/usr/share/llama-models"
 
 show_usage() {
-    echo "Usage: llama-model-switch [small|large|list]"
+    echo "Usage: llama-model-switch [small|medium|large|list]"
     echo ""
     echo "Switch between available LLM models:"
-    echo "  small  - Qwen2.5-0.5B  (~340MB, faster, less capable)"
-    echo "  large  - Qwen2.5-1.5B  (~935MB, slower, more capable)"  
-    echo "  list   - Show available models and current model"
+    echo "  small   - Qwen2.5-0.5B Q4_K_M  (~340MB, fastest, lower quality)"
+    echo "  medium  - Qwen2.5-1.5B Q4_K_S  (~800MB, fast, good quality) [DEFAULT]"  
+    echo "  large   - Qwen2.5-1.5B Q4_K_M  (~935MB, slower, best quality)"
+    echo "  list    - Show available models and current model"
     echo ""
     echo "Current model:"
     ls -lh "$MODEL_DIR/default" 2>/dev/null | awk '{print "  " $NF}'
@@ -24,13 +25,19 @@ fi
 
 case "$1" in
     small)
-        echo "Switching to small model (Qwen2.5-0.5B)..."
+        echo "Switching to small model (Qwen2.5-0.5B Q4_K_M)..."
         ln -sf Qwen2.5-0.5B-Instruct-Q4_K_M.gguf "$MODEL_DIR/default"
         echo "✓ Switched to small model"
         echo "  Restart llama-server: systemctl restart llama-server"
         ;;
+    medium)
+        echo "Switching to medium model (Qwen2.5-1.5B Q4_K_S)..."
+        ln -sf Qwen2.5-1.5B-Instruct-Q4_K_S.gguf "$MODEL_DIR/default"
+        echo "✓ Switched to medium model (default)"
+        echo "  Restart llama-server: systemctl restart llama-server"
+        ;;
     large)
-        echo "Switching to large model (Qwen2.5-1.5B)..."
+        echo "Switching to large model (Qwen2.5-1.5B Q4_K_M)..."
         ln -sf Qwen2.5-1.5B-Instruct-Q4_K_M.gguf "$MODEL_DIR/default"
         echo "✓ Switched to large model"
         echo "  Restart llama-server: systemctl restart llama-server"

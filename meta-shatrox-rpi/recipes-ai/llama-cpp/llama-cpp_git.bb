@@ -93,7 +93,7 @@ FILES:${PN}-dev = " \
 
 RDEPENDS:${PN} = "libstdc++ curl"
 RDEPENDS:${PN}-server = "${PN} libstdc++ bash curl"
-RDEPENDS:${PN}-tools = "${PN} bash curl"
+RDEPENDS:${PN}-tools = "${PN} bash curl python3-core"
 
 # Systemd service configuration
 SYSTEMD_PACKAGES = "${PN}-server"

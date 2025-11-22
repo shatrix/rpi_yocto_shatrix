@@ -1,7 +1,7 @@
 #!/bin/bash
 ################################################################################
 # llama-ask - Voice-interactive AI assistant for Raspberry Pi
-# Uses llama-server HTTP API for fast responses
+# Uses llama-server HTTP API with Qwen chat template for accurate responses
 ################################################################################
 
 MODEL_DIR="/usr/share/llama-models"
@@ -26,48 +26,62 @@ if [ $# -eq 0 ]; then
 fi
 
 # Combine all arguments as prompt
-PROMPT="$*"
+USER_PROMPT="$*"
 
-echo "🤖 Asking AI: $PROMPT"
+echo "🤖 Asking AI: $USER_PROMPT"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
 # Check if llama-server is running
 if ! curl -s "$SERVER_URL/health" >/dev/null 2>&1; then
-    echo "⚠️  llama-server is not running. Starting server..."
-    echo "   This may take a few seconds..."
-    
-    # Fallback to direct llama-cli if server not available
-    RESPONSE=$(echo "$PROMPT" | /usr/bin/llama-cli \
-        -m "$DEFAULT_MODEL" \
-        --n-predict 256 \
-        --temp 0.7 \
-        --top-k 40 \
-        --top-p 0.9 \
-        --threads 4 \
-        2>/dev/null | \
-        grep "^>" | \
-        grep -v "EOF by user" | \
-        sed 's/^> //')
-else
-    # Use HTTP API for fast response
-    # Use awk to properly extract JSON content field (handles escaped quotes)
-    RESPONSE=$(curl -s "$SERVER_URL/completion" \
-        -H "Content-Type: application/json" \
-        -d "{
-            \"prompt\": \"$PROMPT\",
-            \"n_predict\": 80,
-            \"temperature\": 0.7,
-            \"top_k\": 40,
-            \"top_p\": 0.9,
-            \"stream\": false
-        }" | awk -F'"content":"' '{print $2}' | awk -F'","' '{print $1}' | sed 's/\\n/\n/g; s/\\"/"/g; s/\\\\/\\/g')
+    echo "⚠️  llama-server is not running."
+    echo "   Start it with: systemctl start llama-server"
+    exit 1
 fi
 
+# Format prompt with Qwen chat template
+CHAT_PROMPT="<|im_start|>system
+You are a helpful assistant.<|im_end|>
+<|im_start|>user
+$USER_PROMPT<|im_end|>
+<|im_start|>assistant
+"
+
+# Call API and parse response with Python
+RESPONSE=$(curl -s "$SERVER_URL/completion" \
+    -H "Content-Type: application/json" \
+    -d "{
+        \"prompt\": $(echo "$CHAT_PROMPT" | python3 -c 'import sys,json; print(json.dumps(sys.stdin.read()))'),
+        \"n_predict\": 200,
+        \"temperature\": 0.7,
+        \"top_p\": 0.9,
+        \"top_k\": 40,
+        \"stop\": [\"<|im_end|>\"],
+        \"stream\": false
+    }" | python3 -c "
+import sys, json, re
+
+try:
+    data = json.load(sys.stdin)
+    content = data.get('content', '')
+    
+    # Trim incomplete final sentence (ends without proper punctuation)
+    sentences = re.split(r'([.!?]\s+)', content)
+    if len(sentences) > 1 and sentences[-1].strip() and not sentences[-1].strip().endswith(('.', '!', '?')):
+        content = ''.join(sentences[:-1])
+    
+    print(content.strip())
+except Exception as e:
+    print(f'Error parsing response: {e}', file=sys.stderr)
+    sys.exit(1)
+")
+
+# Check if response is empty
 if [ -z "$RESPONSE" ]; then
     echo "Error: No response from AI"
     exit 1
 fi
 
+# Display response
 echo "$RESPONSE"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
