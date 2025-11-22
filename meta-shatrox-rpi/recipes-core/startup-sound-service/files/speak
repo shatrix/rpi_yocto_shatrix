@@ -21,7 +21,7 @@ AUDIO_DEVICE=$(/usr/bin/detect-audio.sh)
 # -s 150: speed (words per minute)
 # -v en-us+m1: US English male voice
 # Output to stdout, pipe to aplay with automatic format conversion
-espeak --stdout -s 120 -v en-us+m3 "${MESSAGE}" 2>/dev/null | \
+espeak --stdout -s 140 -v en-us+m3 "${MESSAGE}" 2>/dev/null | \
     aplay -q -D"${AUDIO_DEVICE}" 2>/dev/null
 
 exit $?

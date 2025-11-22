@@ -50,6 +50,7 @@ if ! curl -s "$SERVER_URL/health" >/dev/null 2>&1; then
         sed 's/^> //')
 else
     # Use HTTP API for fast response
+    # Use awk to properly extract JSON content field (handles escaped quotes)
     RESPONSE=$(curl -s "$SERVER_URL/completion" \
         -H "Content-Type: application/json" \
         -d "{
@@ -59,7 +60,7 @@ else
             \"top_k\": 40,
             \"top_p\": 0.9,
             \"stream\": false
-        }" | sed 's/.*"content":"\([^"]*\)".*/\1/' | sed 's/\\n/\n/g')
+        }" | awk -F'"content":"' '{print $2}' | awk -F'","' '{print $1}' | sed 's/\\n/\n/g; s/\\"/"/g; s/\\\\/\\/g')
 fi
 
 if [ -z "$RESPONSE" ]; then

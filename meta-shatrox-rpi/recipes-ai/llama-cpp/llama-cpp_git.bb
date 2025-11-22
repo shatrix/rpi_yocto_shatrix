@@ -10,6 +10,7 @@ SRC_URI = "git://github.com/ggerganov/llama.cpp.git;protocol=https;branch=master
            file://llama-quick-start \
            file://llama-server-start \
            file://llama-ask \
+           file://llama-model-switch \
            file://llama-server.service \
 "
 
@@ -49,6 +50,7 @@ do_install:append() {
     install -m 0755 ${WORKDIR}/llama-quick-start ${D}${bindir}/
     install -m 0755 ${WORKDIR}/llama-server-start ${D}${bindir}/
     install -m 0755 ${WORKDIR}/llama-ask ${D}${bindir}/
+    install -m 0755 ${WORKDIR}/llama-model-switch ${D}${bindir}/
     
     # Install systemd service for llama-server auto-start
     install -d ${D}${systemd_system_unitdir}
@@ -94,6 +96,7 @@ RDEPENDS:${PN}-server = "${PN} libstdc++ bash curl"
 RDEPENDS:${PN}-tools = "${PN} bash curl"
 
 # Systemd service configuration
+SYSTEMD_PACKAGES = "${PN}-server"
 SYSTEMD_SERVICE:${PN}-server = "llama-server.service"
 SYSTEMD_AUTO_ENABLE:${PN}-server = "enable"
 

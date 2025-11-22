@@ -1,0 +1,53 @@
+#!/bin/bash
+################################################################################
+# llama-model-switch - Switch between different LLM models
+################################################################################
+
+MODEL_DIR="/usr/share/llama-models"
+
+show_usage() {
+    echo "Usage: llama-model-switch [small|large|list]"
+    echo ""
+    echo "Switch between available LLM models:"
+    echo "  small  - Qwen2.5-0.5B  (~340MB, faster, less capable)"
+    echo "  large  - Qwen2.5-1.5B  (~935MB, slower, more capable)"  
+    echo "  list   - Show available models and current model"
+    echo ""
+    echo "Current model:"
+    ls -lh "$MODEL_DIR/default" 2>/dev/null | awk '{print "  " $NF}'
+}
+
+if [ $# -eq 0 ]; then
+    show_usage
+    exit 0
+fi
+
+case "$1" in
+    small)
+        echo "Switching to small model (Qwen2.5-0.5B)..."
+        ln -sf Qwen2.5-0.5B-Instruct-Q4_K_M.gguf "$MODEL_DIR/default"
+        echo "✓ Switched to small model"
+        echo "  Restart llama-server: systemctl restart llama-server"
+        ;;
+    large)
+        echo "Switching to large model (Qwen2.5-1.5B)..."
+        ln -sf Qwen2.5-1.5B-Instruct-Q4_K_M.gguf "$MODEL_DIR/default"
+        echo "✓ Switched to large model"
+        echo "  Restart llama-server: systemctl restart llama-server"
+        ;;
+    list)
+        echo "Available models in $MODEL_DIR:"
+        ls -lh "$MODEL_DIR"/*.gguf 2>/dev/null | awk '{printf "  %s (%s)\n", $NF, $5}'
+        echo ""
+        echo "Current default model:"
+        ls -lh "$MODEL_DIR/default" | awk '{print "  → " $NF}'
+        ;;
+    *)
+        echo "Error: Unknown option '$1'"
+        echo ""
+        show_usage
+        exit 1
+        ;;
+esac
+
+exit 0

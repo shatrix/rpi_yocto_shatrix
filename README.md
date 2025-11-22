@@ -128,15 +128,31 @@ speak "System is ready"
 
 ### AI Commands (AI image only)
 
-The AI image includes **llama-server** which auto-starts on boot, keeping the model loaded in RAM for fast responses.
+The AI image includes **llama-server** which auto-starts on boot, keeping the model loaded in RAM for fast responses. Two models are included:
+- **Qwen2.5-0.5B** (default): Faster, ~340MB, ~2-3s responses
+- **Qwen2.5-1.5B** (large): Better quality, ~935MB, ~6-7s responses
 
 **Voice-interactive AI assistant:**
 ```bash
 llama-ask "What is Raspberry Pi?"
-# AI responds with text and speaks the answer (2-5 seconds)
+# AI responds with text and speaks the answer (2-3 seconds)
 
 llama-ask --silent "Explain Linux kernel"
 # AI responds with text only (no voice)
+```
+
+**Switch between models:**
+```bash
+# Use the better quality, larger model
+llama-model-switch large
+systemctl restart llama-server
+
+# Use the faster, smaller model (default)
+llama-model-switch small
+systemctl restart llama-server
+
+# List available models
+llama-model-switch list
 ```
 
 **Direct LLM inference (legacy):**
