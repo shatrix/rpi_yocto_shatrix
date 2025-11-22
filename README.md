@@ -118,13 +118,29 @@ Includes: Everything from core + llama.cpp + Qwen2.5-1.5B model
 - Username: `root`
 - Password: (none - direct login)
 
-### TTS Commands
+### TTS (Text-to-Speech) - Piper Neural Engine
 
-Use the `speak` command from anywhere:
+The system includes **Piper neural TTS** for natural-sounding voice output. Two voices are pre-installed:
+
+**Test the speak command:**
 ```bash
-speak "Hello world"
-speak "System is ready"
+speak "Hello, this is Piper neural text to speech"
 ```
+
+**Switch voices:**
+```bash
+# Switch to female voice (lessac - warm, Scarlett Johansson-like)
+cd /usr/share/piper-voices
+sudo ln -sf en_US-lessac-medium.onnx default.onnx
+sudo ln -sf en_US-lessac-medium.onnx.json default.onnx.json
+
+# Switch back to male voice (ryan - clear, default)
+sudo ln -sf en_US-ryan-medium.onnx default.onnx
+sudo ln -sf en_US-ryan-medium.onnx.json default.onnx.json
+```
+
+**Startup sound:**
+The system speaks a welcome message on boot.
 
 ### AI Commands (AI image only)
 

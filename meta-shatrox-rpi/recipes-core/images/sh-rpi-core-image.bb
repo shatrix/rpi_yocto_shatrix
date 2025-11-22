@@ -144,13 +144,12 @@ UTILITIES_MIN = " \
 "
 
 ################################################################################
-# Text-to-Speech
+# TTS (Text-to-Speech) - Piper Neural TTS
 ################################################################################
 
 TTS_PKGS = " \
-    espeak \
+    piper-tts \
     alsa-utils \
-    alsa-config \
     startup-sound-service \
 "
 

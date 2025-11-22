@@ -1,13 +1,12 @@
-SUMMARY = "Startup sound service using espeak text-to-speech"
-DESCRIPTION = "Systemd service that plays a startup sound message using espeak TTS"
+SUMMARY = "Startup sound service for Raspberry Pi"
+DESCRIPTION = "Plays welcome message on boot using Piper TTS"
 LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/MIT;md5=0835ade698e0bcf8506ecda2f7b4f302"
 
-SRC_URI = " \
-    file://startup-sound.service \
-    file://startup-sound.sh \
-    file://detect-audio.sh \
-    file://speak \
+SRC_URI = "file://startup-sound.service \
+           file://startup-sound.sh \
+           file://detect-audio.sh \
+           file://speak \
 "
 
 S = "${WORKDIR}"
@@ -17,7 +16,7 @@ inherit systemd
 SYSTEMD_SERVICE:${PN} = "startup-sound.service"
 SYSTEMD_AUTO_ENABLE = "enable"
 
-RDEPENDS:${PN} = "espeak alsa-utils bash"
+RDEPENDS:${PN} = "piper-tts alsa-utils bash"
 
 do_install() {
     # Install systemd service file
