@@ -1,0 +1,21 @@
+#!/bin/bash
+################################################################################
+# SHATROX Display App Launcher
+# Starts the QML-based AI display on EGLFS
+################################################################################
+
+LOG_FILE="/tmp/shatrox-display.log"
+
+# Ensure log file exists with proper permissions
+touch "$LOG_FILE"
+chmod 666 "$LOG_FILE"
+chown root:root "$LOG_FILE"
+
+# Clear old content on startup (optional)
+echo "╔═══════════════════════════════════════════════════════════╗" > "$LOG_FILE"
+echo "║           SHATROX AI Display Ready                       ║" >> "$LOG_FILE"
+echo "╚═══════════════════════════════════════════════════════════╝" >> "$LOG_FILE"
+echo "" >> "$LOG_FILE"
+
+# Launch QML app
+exec /usr/bin/qmlscene /usr/share/shatrox/shatrox-display.qml

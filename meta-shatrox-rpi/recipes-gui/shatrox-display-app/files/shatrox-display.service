@@ -1,0 +1,21 @@
+[Unit]
+Description=SHATROX QML Display Service
+Documentation=https://github.com/shatrix/rpi_yocto_shatrix
+After=dbus.service
+Wants=dbus.service
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/shatrox-display-start
+Restart=always
+RestartSec=3
+StandardOutput=journal
+StandardError=journal
+
+# Qt/EGLFS environment
+Environment="QT_QPA_PLATFORM=eglfs"
+Environment="QT_QPA_EGLFS_ALWAYS_SET_MODE=1"
+Environment="XDG_RUNTIME_DIR=/tmp/runtime-root"
+
+[Install]
+WantedBy=multi-user.target

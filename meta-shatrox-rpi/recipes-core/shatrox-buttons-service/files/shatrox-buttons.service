@@ -6,7 +6,7 @@ Wants=llama-server.service
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/shatrox-buttons
+ExecStart=/usr/bin/python3 -B /usr/bin/shatrox-buttons
 Restart=always
 RestartSec=5
 
@@ -14,9 +14,12 @@ RestartSec=5
 StandardOutput=journal+console
 StandardError=journal+console
 
+# Prevent Python bytecode caching (ensures latest script runs)
+Environment="PYTHONDONTWRITEBYTECODE=1"
+
 # Security hardening
 NoNewPrivileges=true
-PrivateTmp=true
+# Note: PrivateTmp removed - we need shared /tmp for display log file
 
 [Install]
 WantedBy=multi-user.target

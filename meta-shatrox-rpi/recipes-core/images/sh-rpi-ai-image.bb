@@ -30,6 +30,21 @@ AI_PKGS = " \
     cmake \
     tmux \
     shatrox-buttons-service \
+    shatrox-display-app \
+    ${QT5_MINIMAL} \
+"
+
+################################################################################
+# Minimal Qt5 for 3.5" Display GUI (EGLFS)
+################################################################################
+
+QT5_MINIMAL = " \
+    qtbase \
+    qtbase-plugins \
+    qtdeclarative \
+    qtdeclarative-qmlplugins \
+    qtquickcontrols2 \
+    qt5-env \
 "
 
 export IMAGE_BASENAME = "sh-rpi-ai-image"

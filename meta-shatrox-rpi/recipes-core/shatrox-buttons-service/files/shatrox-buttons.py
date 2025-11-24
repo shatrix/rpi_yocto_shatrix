@@ -9,6 +9,7 @@ from gpiod.line import Direction, Bias, Edge
 import time
 import subprocess
 import sys
+import os
 
 # Button to GPIO mapping (K8 on GPIO 23)
 BUTTON_MAP = {
@@ -36,31 +37,24 @@ BUTTON_QUESTIONS = {
 
 INPUT_PINS = list(BUTTON_MAP.keys())
 CHIP_PATH = "/dev/gpiochip0"
-DEBOUNCE_MS = 500  # 500ms debounce time (increased to prevent double-clicks)
-DISPLAY_TTY = "/dev/tty1"  # 3.5" SPI display
+DEBOUNCE_MS = 1000  # 1 second debounce time (prevents double-triggering)
+DISPLAY_LOG = "/tmp/shatrox-display.log"  # Shared log for QML app
 
 last_press_time = {}
 
-# Open display TTY for writing
-try:
-    display_fd = open(DISPLAY_TTY, 'w', buffering=1)
-except Exception as e:
-    print(f"Warning: Could not open {DISPLAY_TTY}: {e}", file=sys.stderr)
-    display_fd = None
-
 
 def display_print(msg, end='\n'):
-    """Print to both stdout (journald) and the display"""
-    # Print to stdout (for journald/serial)
+    """Print to stdout (journald/serial) and QML display log"""
+    # Print to stdout (for journald/serial console)
     print(msg, end=end, flush=True)
     
-    # Also write to display if available
-    if display_fd:
-        try:
-            display_fd.write(msg + end)
-            display_fd.flush()
-        except Exception as e:
-            print(f"Display write error: {e}", file=sys.stderr)
+    # Write to QML display log - reopen each time to handle file being cleared
+    try:
+        with open(DISPLAY_LOG, 'a') as f:
+            f.write(msg + end)
+            f.flush()
+    except Exception as e:
+        print(f"Log write error: {e}", file=sys.stderr)
 
 
 
@@ -145,8 +139,6 @@ def run():
         display_print("\n\n╔═══════════════════════════════════════════════════════════╗")
         display_print("║       Shatrox Button Service Stopped                     ║")
         display_print("╚═══════════════════════════════════════════════════════════╝")
-        if display_fd:
-            display_fd.close()
         sys.exit(0)
 
 
