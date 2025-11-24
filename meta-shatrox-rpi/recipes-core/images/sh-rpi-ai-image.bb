@@ -29,6 +29,7 @@ AI_PKGS = " \
     python3-numpy \
     cmake \
     tmux \
+    shatrox-buttons-service \
 "
 
 export IMAGE_BASENAME = "sh-rpi-ai-image"

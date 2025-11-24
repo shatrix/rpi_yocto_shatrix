@@ -1,0 +1,22 @@
+[Unit]
+Description=SHATROX Button Monitor Service
+Documentation=https://github.com/shatrix/rpi_yocto_shatrix
+After=network.target sound.target llama-server.service
+Wants=llama-server.service
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/shatrox-buttons
+Restart=always
+RestartSec=5
+
+# Output to journald AND serial console (Python also writes to display)
+StandardOutput=journal+console
+StandardError=journal+console
+
+# Security hardening
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
