@@ -11,85 +11,108 @@ import subprocess
 import sys
 import os
 
-# Button to GPIO mapping (K8 on GPIO 23)
+# ---------------------------------------------------------
+# Updated GPIO mapping from user
+# ---------------------------------------------------------
+# Button to GPIO mapping
 BUTTON_MAP = {
-    26: "K1",
-    19: "K2",
+    5:  "K1",
+    6:  "K2",
     13: "K3",
-    6:  "K4",
-    5:  "K5",
-    22: "K6",
-    27: "K7",
-    23: "K8"
+    19: "K4",
+    26: "K8"
 }
 
-# Button to question mapping
+# Button to question mapping (K1, K2, K8 use special actions)
 BUTTON_QUESTIONS = {
-    "K1": "What is the Raspberry Pi board?",
-    "K2": "Explain the Linux Kernel.",
-    "K3": "Why is the sky blue?",
-    "K4": "Why is the sky blue?",
-    "K5": "Why is the sky blue?",
-    "K6": "Why is the sky blue?",
-    "K7": "Why is the sky blue?",
-    "K8": "Why is the sky blue?"
+    "K1": None,
+    "K2": None,
+    "K3": "What is the Raspberry Pi?",
+    "K4": "Explain the Linux Kernel.",
+    "K8": None,
 }
 
 INPUT_PINS = list(BUTTON_MAP.keys())
 CHIP_PATH = "/dev/gpiochip0"
-DEBOUNCE_MS = 1000  # 1 second debounce time (prevents double-triggering)
-DISPLAY_LOG = "/tmp/shatrox-display.log"  # Shared log for QML app
+DEBOUNCE_MS = 500  # half a second is enough
+DISPLAY_LOG = "/tmp/shatrox-display.log"
 
 last_press_time = {}
 
 
 def display_print(msg, end='\n'):
-    """Print to stdout (journald/serial) and QML display log"""
-    # Print to stdout (for journald/serial console)
+    """Print to stdout and to QML display log"""
     print(msg, end=end, flush=True)
-    
-    # Write to QML display log - reopen each time to handle file being cleared
     try:
         with open(DISPLAY_LOG, 'a') as f:
             f.write(msg + end)
             f.flush()
     except Exception as e:
-        print(f"Log write error: {e}", file=sys.stderr)
-
-
+        print(f"Warning: Could not write to display log: {e}", file=sys.stderr)
 
 
 def handle_button_press(button_name):
-    """Handle a button press event using llama-ask"""
+    """Handle a button press event"""
+
+    # ----------------------------------------------
+    # SPECIAL ACTIONS FOR K1, K2, AND K8
+    # ----------------------------------------------
+
+    if button_name == "K8":
+        display_print("[K8] System shutdown initiated...")
+        subprocess.Popen([
+            "speak",
+            "System is shutting down in 3 2 1"
+        ]).wait()  # Wait for TTS to complete
+        display_print("[K8] Shutting down now...")
+        subprocess.run(["shutdown", "-h", "now"])
+        return
+
+    if button_name == "K1":
+        display_print("[K1] Speaking fun message...")
+        subprocess.Popen([
+            "speak",
+            "zoozoo haii yaii yaii"
+        ])
+        return
+
+    if button_name == "K2":
+        display_print("[K2] Speaking greeting message...")
+        subprocess.Popen([
+            "speak",
+            "Hi, I'm Ruby — an AI-powered robot here to answer your questions"
+        ])
+        return
+
+    # ----------------------------------------------
+    # DEFAULT = Llama-ask for K3-K4
+    # ----------------------------------------------
+
     question = BUTTON_QUESTIONS.get(button_name, "Unknown question")
-    
+
     display_print(f"\n>>> [{button_name}] Question: {question}")
     display_print("━" * 60)
-    
+
     try:
-        # Run llama-ask and capture its output
         result = subprocess.Popen(
             ["llama-ask", question],
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             text=True,
-            bufsize=1  # Line buffered
+            bufsize=1
         )
-        
-        # Display output line by line in real-time
+
         for line in result.stdout:
             display_print(line.rstrip())
-        
-        # Wait for completion
+
         result.wait(timeout=60)
-        
+
         if result.returncode != 0:
             display_print(f"Error: llama-ask returned code {result.returncode}")
-            
+
     except subprocess.TimeoutExpired:
         display_print("Error: Request timeout")
-        if result:
-            result.kill()
+        result.kill()
     except FileNotFoundError:
         display_print("Error: llama-ask command not found")
     except Exception as e:
@@ -98,6 +121,7 @@ def handle_button_press(button_name):
 
 def run():
     """Main service loop"""
+
     line_settings = gpiod.LineSettings(
         direction=Direction.INPUT,
         bias=Bias.PULL_UP,
@@ -110,38 +134,45 @@ def run():
             consumer="shatrox-buttons",
             config={tuple(INPUT_PINS): line_settings}
         ) as request:
-            
+
             display_print("╔═══════════════════════════════════════════════════════════╗")
-            display_print("║       SHATROX Button Service Active                      ║")
-            display_print(f"║       Monitoring: {', '.join(BUTTON_MAP.values())}                             ║")
+            display_print("║        SHATROX Button Service Active                      ║")
+            display_print(f"║        Monitoring: {', '.join(BUTTON_MAP.values())}                            ║")
             display_print("╚═══════════════════════════════════════════════════════════╝")
             display_print("")
-            
+
             while True:
-                # Wait for button press event
+
                 if request.wait_edge_events(timeout=None):
                     events = request.read_edge_events()
-                    
+
+                    # Process ONLY the first real event inside this batch
                     for event in events:
                         gpio_pin = event.line_offset
                         button_name = BUTTON_MAP.get(gpio_pin, "Unknown")
-                        
-                        # Debounce check
+
                         now = time.time() * 1000
-                        if now - last_press_time.get(gpio_pin, 0) > DEBOUNCE_MS:
-                            last_press_time[gpio_pin] = now
-                            handle_button_press(button_name)
+
+                        # Debounce check
+                        if now - last_press_time.get(button_name, 0) < DEBOUNCE_MS:
+                            continue
+
+                        last_press_time[button_name] = now
+                        handle_button_press(button_name)
+
+                        # Crucial: stop processing this batch (bounce fix)
+                        break
 
     except OSError as e:
         display_print(f"GPIO Error: {e}")
         sys.exit(1)
+
     except KeyboardInterrupt:
         display_print("\n\n╔═══════════════════════════════════════════════════════════╗")
-        display_print("║       Shatrox Button Service Stopped                     ║")
+        display_print("║        Shatrox Button Service Stopped                     ║")
         display_print("╚═══════════════════════════════════════════════════════════╝")
         sys.exit(0)
 
 
 if __name__ == "__main__":
     run()
-

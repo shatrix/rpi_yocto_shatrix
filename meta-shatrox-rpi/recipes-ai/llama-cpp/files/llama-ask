@@ -51,7 +51,7 @@ RESPONSE=$(curl -s "$SERVER_URL/completion" \
     -H "Content-Type: application/json" \
     -d "{
         \"prompt\": $(echo "$CHAT_PROMPT" | python3 -c 'import sys,json; print(json.dumps(sys.stdin.read()))'),
-        \"n_predict\": 200,
+        \"n_predict\": 100,
         \"temperature\": 0.7,
         \"top_p\": 0.9,
         \"top_k\": 40,
