@@ -17,9 +17,10 @@ SHATROX is a custom Poky-based distribution for Raspberry Pi boards, optimized f
 
 - **AI Capabilities** (AI image only):
   - llama.cpp for efficient CPU-based LLM inference
-  - Pre-quantized Qwen2.5-1.5B model (optimized for 4GB RAM)
+  - Pre-quantized Qwen2.5-1.5B Q2_K model (optimized for low memory, 676MB)
   - Auto-start HTTP API server (llama-server) for instant responses
   - Voice-interactive assistant (`llama-ask`) with TTS integration
+  - GPIO button interface for physical interaction (8 buttons)
   - Helper scripts: `llama-server-start`, `llama-quick-start`
 
 - **Hardware Support**:
@@ -142,17 +143,50 @@ sudo ln -sf en_US-ryan-medium.onnx.json default.onnx.json
 **Startup sound:**
 The system speaks a welcome message on boot.
 
+### GPIO Button Interface (AI image only)
+
+The AI image includes a **button service** that monitors 8 GPIO buttons for physical interaction with Ruby (the AI assistant). All button presses are threaded for non-blocking operation.
+
+**Button Mapping:**
+
+| Button | GPIO | Function |
+|--------|------|----------|
+| **K1** | 5 | 🎉 Fun TTS message |
+| **K2** | 6 | 👋 Greeting message |
+| **K3** | 13 | 🤖 Ask: "What is Raspberry Pi?" |
+| **K4** | 19 | 🛑 **Cancel** - Stop all activities |
+| **K8** | 26 | 🔴 **Shutdown** system |
+
+**Features:**
+- **Cancel button (K4)**: Instantly stops any running AI query or speech
+- **Auto-restart**: Pressing K3 while it's running will cancel and restart the query
+- **Non-blocking**: All buttons remain responsive during AI processing
+- **Threaded execution**: Press multiple buttons without waiting
+
+**Service management:**
+```bash
+# Check button service status
+systemctl status shatrox-buttons
+
+# View button logs
+journalctl -u shatrox-buttons -f
+
+# Restart button service
+systemctl restart shatrox-buttons
+```
+
 ### AI Commands (AI image only)
 
 The AI image includes **llama-server** which auto-starts on boot, keeping the model loaded in RAM for fast responses. Three models are included:
-- **Qwen2.5-1.5B Q4_K_S** (default): Balanced, ~800MB, ~6-7s responses ⭐
-- **Qwen2.5-1.5B Q4_K_M** (large): Best quality, ~935MB, ~7-8s responses
+- **Qwen2.5-1.5B Q2_K** (default): Low memory, ~676MB, ~4-5s responses ⭐
+- **Qwen2.5-1.5B Q4_K_M** (large): Best quality, ~986MB, ~6-7s responses
 - **Qwen2.5-0.5B Q4_K_M** (small): Fastest, ~340MB, ~2-3s responses (lower quality)
 
 **Voice-interactive AI assistant:**
 ```bash
 llama-ask "What is Raspberry Pi?"
-# AI responds with text and speaks the answer (~6-7 seconds)
+# AI responds with text and speaks the answer (~4-5 seconds)
+# Limited to 100 tokens for faster responses
 
 llama-ask --silent "Explain Linux kernel"
 # AI responds with text only (no voice)
@@ -164,11 +198,11 @@ llama-ask --silent "Explain Linux kernel"
 llama-model-switch small
 systemctl restart llama-server
 
-# Use the balanced model (default)
+# Use the balanced model (default, lowest memory)
 llama-model-switch medium
 systemctl restart llama-server
 
-# Use the best quality model (slower)
+# Use the best quality model (slower, more memory)
 llama-model-switch large
 systemctl restart llama-server
 
