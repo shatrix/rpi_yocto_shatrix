@@ -10,6 +10,7 @@ import time
 import subprocess
 import sys
 import os
+import threading
 
 # ---------------------------------------------------------
 # Updated GPIO mapping from user
@@ -23,12 +24,12 @@ BUTTON_MAP = {
     26: "K8"
 }
 
-# Button to question mapping (K1, K2, K8 use special actions)
+# Button to question mapping (K1, K2, K4, K8 use special actions)
 BUTTON_QUESTIONS = {
     "K1": None,
     "K2": None,
     "K3": "What is the Raspberry Pi?",
-    "K4": "Explain the Linux Kernel.",
+    "K4": None,  # Cancel/Stop button
     "K8": None,
 }
 
@@ -38,6 +39,13 @@ DEBOUNCE_MS = 500  # half a second is enough
 DISPLAY_LOG = "/tmp/shatrox-display.log"
 
 last_press_time = {}
+
+# Track which buttons have active threads running
+# Only track K3 (long-running LLM task)
+# K1/K2 are fire-and-forget TTS, K4 is cancel, K8 is shutdown
+active_threads = {
+    "K3": False,
+}
 
 
 def display_print(msg, end='\n'):
@@ -51,72 +59,153 @@ def display_print(msg, end='\n'):
         print(f"Warning: Could not write to display log: {e}", file=sys.stderr)
 
 
-def handle_button_press(button_name):
-    """Handle a button press event"""
-
-    # ----------------------------------------------
-    # SPECIAL ACTIONS FOR K1, K2, AND K8
-    # ----------------------------------------------
-
-    if button_name == "K8":
-        display_print("[K8] System shutdown initiated...")
-        subprocess.Popen([
-            "speak",
-            "System is shutting down in 3 2 1"
-        ]).wait()  # Wait for TTS to complete
-        display_print("[K8] Shutting down now...")
-        subprocess.run(["shutdown", "-h", "now"])
-        return
-
-    if button_name == "K1":
-        display_print("[K1] Speaking fun message...")
-        subprocess.Popen([
-            "speak",
-            "zoozoo haii yaii yaii"
-        ])
-        return
-
-    if button_name == "K2":
-        display_print("[K2] Speaking greeting message...")
-        subprocess.Popen([
-            "speak",
-            "Hi, I'm Ruby — an AI-powered robot here to answer your questions"
-        ])
-        return
-
-    # ----------------------------------------------
-    # DEFAULT = Llama-ask for K3-K4
-    # ----------------------------------------------
-
-    question = BUTTON_QUESTIONS.get(button_name, "Unknown question")
-
-    display_print(f"\n>>> [{button_name}] Question: {question}")
-    display_print("━" * 60)
-
+def stop_all_activities():
+    """Stop all running llama-ask and speak processes"""
+    display_print("\n" + "━" * 60)
+    display_print("[CANCEL] Stopping all activities...")
+    
+    # Kill all llama-ask processes (client-side only, leave server running)
     try:
-        result = subprocess.Popen(
-            ["llama-ask", question],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            text=True,
-            bufsize=1
-        )
+        subprocess.run(["pkill", "-9", "llama-ask"], 
+                       stderr=subprocess.DEVNULL,
+                       stdout=subprocess.DEVNULL)
+    except Exception:
+        pass
+    
+    # Kill all speak/piper processes
+    try:
+        subprocess.run(["pkill", "-9", "speak"], 
+                       stderr=subprocess.DEVNULL,
+                       stdout=subprocess.DEVNULL)
+    except Exception:
+        pass
+    
+    try:
+        subprocess.run(["pkill", "-9", "piper"], 
+                       stderr=subprocess.DEVNULL,
+                       stdout=subprocess.DEVNULL)
+    except Exception:
+        pass
+    
+    # Kill audio playback processes (aplay, mpg123, etc.)
+    try:
+        subprocess.run(["pkill", "-9", "aplay"], 
+                       stderr=subprocess.DEVNULL,
+                       stdout=subprocess.DEVNULL)
+    except Exception:
+        pass
+    
+    try:
+        subprocess.run(["pkill", "-9", "mpg123"], 
+                       stderr=subprocess.DEVNULL,
+                       stdout=subprocess.DEVNULL)
+    except Exception:
+        pass
+    
+    display_print("[CANCEL] All activities stopped.")
+    display_print("━" * 60 + "\n")
 
-        for line in result.stdout:
-            display_print(line.rstrip())
 
-        result.wait(timeout=60)
+def _handle_button_press_impl(button_name):
+    """Implementation of button press handling (runs in thread)"""
+    
+    try:
+        # ----------------------------------------------
+        # SPECIAL ACTIONS FOR K1, K2, K4, AND K8
+        # ----------------------------------------------
 
-        if result.returncode != 0:
-            display_print(f"Error: llama-ask returned code {result.returncode}")
+        if button_name == "K8":
+            display_print("[K8] System shutdown initiated...")
+            subprocess.Popen([
+                "speak",
+                "System is shutting down in 3 2 1"
+            ]).wait()  # Wait for TTS to complete
+            display_print("[K8] Shutting down now...")
+            subprocess.run(["shutdown", "-h", "now"])
+            return
 
-    except subprocess.TimeoutExpired:
-        display_print("Error: Request timeout")
-        result.kill()
-    except FileNotFoundError:
-        display_print("Error: llama-ask command not found")
-    except Exception as e:
-        display_print(f"Error: {e}")
+        if button_name == "K4":
+            stop_all_activities()
+            return
+
+        if button_name == "K1":
+            display_print("[K1] Speaking fun message...")
+            subprocess.Popen([
+                "speak",
+                "zoozoo haii yaii yaii"
+            ])
+            return
+
+        if button_name == "K2":
+            display_print("[K2] Speaking greeting message...")
+            subprocess.Popen([
+                "speak",
+                "Hi, I'm Ruby — an AI-powered robot here to answer your questions"
+            ])
+            return
+
+        # ----------------------------------------------
+        # DEFAULT = Llama-ask for K3 only
+        # ----------------------------------------------
+
+        question = BUTTON_QUESTIONS.get(button_name, "Unknown question")
+
+        display_print(f"\n>>> [{button_name}] Question: {question}")
+        display_print("━" * 60)
+
+        try:
+            result = subprocess.Popen(
+                ["llama-ask", question],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+                bufsize=1
+            )
+
+            for line in result.stdout:
+                display_print(line.rstrip())
+
+            result.wait(timeout=60)
+
+            # Exit code -9 means we killed it (via K4), which is expected
+            if result.returncode != 0 and result.returncode != -9:
+                display_print(f"Error: llama-ask returned code {result.returncode}")
+
+        except subprocess.TimeoutExpired:
+            display_print("Error: Request timeout")
+            result.kill()
+        except FileNotFoundError:
+            display_print("Error: llama-ask command not found")
+        except Exception as e:
+            display_print(f"Error: {e}")
+    
+    finally:
+        # Always mark button as inactive when thread completes
+        if button_name in active_threads:
+            active_threads[button_name] = False
+
+
+def handle_button_press(button_name):
+    """Handle a button press event by launching it in a separate thread"""
+    
+    # Check if this button already has an active thread running
+    if button_name in active_threads and active_threads[button_name]:
+        display_print(f"[{button_name}] Already running - restarting...")
+        stop_all_activities()  # Kill everything
+        time.sleep(0.5)  # Longer pause to ensure cleanup
+    
+    # Mark this button as active (before starting thread)
+    if button_name in active_threads:
+        active_threads[button_name] = True
+    
+    # Run the button handler in a daemon thread so main loop stays responsive
+    thread = threading.Thread(
+        target=_handle_button_press_impl,
+        args=(button_name,),
+        daemon=True,
+        name=f"Button-{button_name}"
+    )
+    thread.start()
 
 
 def run():
