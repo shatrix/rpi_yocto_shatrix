@@ -14,8 +14,9 @@ SRC_URI = "git://github.com/ggerganov/llama.cpp.git;protocol=https;branch=master
            file://llama-server.service \
 "
 
-# Use latest stable tag (b4360 is recent stable, adjust as needed)
-SRCREV = "${AUTOREV}"
+# Pinned to stable tag b7164 (latest as of Nov 2025) for reproducible builds
+# Update this when you want to upgrade llama.cpp
+SRCREV = "b7164"
 
 S = "${WORKDIR}/git"
 
