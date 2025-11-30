@@ -50,10 +50,32 @@ check_and_add_bblayer 'meta-gnome' 'meta-openembedded/meta-gnome'
 check_and_add_bblayer 'meta-initramfs' 'meta-openembedded/meta-initramfs'
 check_and_add_bblayer 'meta-shatrox-rpi' '../meta-shatrox-rpi'
 
-# Print more help for the user
+# Print summary and help for the user
 echo ""
-_print_info "Start building the SHATROX image with this cmd: \$ bitbake -k sh-rpi-core-image"
-_print_info "Or build the SHATROX Qt image with this cmd:    \$ bitbake -k sh-rpi-qt-image"
+echo -e "\e[32m\e[1m═══════════════════════════════════════════════════════════════════════════\e[0m"
+echo -e "\e[36m\e[1m                  🚀 SHATROX Raspberry Pi Yocto Build                     \e[0m"
+echo -e "\e[32m\e[1m═══════════════════════════════════════════════════════════════════════════\e[0m"
+echo ""
+_print_info "✓ Environment configured successfully!"
+_print_info "✓ All required layers have been added to bblayers.conf"
+_print_info "✓ Custom configuration loaded from shatrox-rpi.conf"
+echo ""
+echo -e "\e[33m\e[1m📦 Available Build Targets:\e[0m"
+echo ""
+echo -e "  \e[1m1. Core Console Image\e[0m (~500MB - minimal, systemd, networking, TTS)"
+echo -e "     \e[36m\$ bitbake -k sh-rpi-core-image\e[0m"
+echo ""
+echo -e "  \e[1m2. Qt5 EGLFS Image\e[0m (~800MB - GUI support, Qt5 libraries)"
+echo -e "     \e[36m\$ bitbake -k sh-rpi-qt-image\e[0m"
+echo ""
+echo -e "  \e[1m3. AI Image\e[0m (~2GB - LLM inference, llama.cpp, Qwen2.5-1.5B)"
+echo -e "     \e[36m\$ bitbake -k sh-rpi-ai-image\e[0m"
+echo ""
+echo -e "\e[32m\e[1m═══════════════════════════════════════════════════════════════════════════\e[0m"
+echo ""
+
+# Set custom prompt to indicate SHATROX bitbake environment
+export PS1="\[\e[1;35m\][SHATROX-BB]\[\e[0m\] \[\e[1;34m\]\w\[\e[0m\] \$ "
 
 # enter the bitbake shell
 bash
