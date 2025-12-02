@@ -15,6 +15,7 @@ PR = "r001"
 # Add AI-specific packages
 IMAGE_INSTALL += " \
     ${AI_PKGS} \
+    ${STRESS_TEST_PKGS} \
 "
 
 ################################################################################
@@ -45,6 +46,16 @@ QT5_MINIMAL = " \
     qtdeclarative-qmlplugins \
     qtquickcontrols2 \
     qt5-env \
+"
+
+################################################################################
+# Stress Testing & System Monitoring
+################################################################################
+
+STRESS_TEST_PKGS = " \
+    stress-ng \
+    sysbench \
+    sysstat \
 "
 
 export IMAGE_BASENAME = "sh-rpi-ai-image"

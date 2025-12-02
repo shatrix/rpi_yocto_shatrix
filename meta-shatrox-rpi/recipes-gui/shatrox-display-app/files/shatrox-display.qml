@@ -12,29 +12,29 @@ ApplicationWindow {
     // Robot Face Layout
     Column {
         anchors.fill: parent
-        anchors.margins: 20
-        spacing: 15
+        anchors.margins: 10
+        spacing: 10
         
-        // Eyes
+        // Eyes (at top edges)
         Row {
             anchors.horizontalCenter: parent.horizontalCenter
-            spacing: 80
+            spacing: 180
             
             // Left Eye
             Rectangle {
                 id: leftEye
-                width: 60
-                height: 60
-                radius: 30
+                width: 100
+                height: 100
+                radius: 50
                 color: "#1a1a1a"
                 border.color: "#00ff00"
                 border.width: 3
                 
                 Rectangle {
                     id: leftPupil
-                    width: 20
-                    height: 20
-                    radius: 10
+                    width: 25
+                    height: 25
+                    radius: 12
                     color: "#00ff00"
                     anchors.centerIn: parent
                     
@@ -61,18 +61,18 @@ ApplicationWindow {
             // Right Eye
             Rectangle {
                 id: rightEye
-                width: 60
-                height: 60
-                radius: 30
+                width: 100
+                height: 100
+                radius: 50
                 color: "#1a1a1a"
                 border.color: "#00ff00"
                 border.width: 3
                 
                 Rectangle {
                     id: rightPupil
-                    width: 20
-                    height: 20
-                    radius: 10
+                    width: 25
+                    height: 25
+                    radius: 12
                     color: "#00ff00"
                     anchors.centerIn: parent
                     
@@ -97,15 +97,41 @@ ApplicationWindow {
             }
         }
         
-        // Nose
+        // CPU Temperature Display (Nose position)
         Rectangle {
             anchors.horizontalCenter: parent.horizontalCenter
-            width: 15
-            height: 25
-            radius: 8
+            width: 50
+            height: 35
+            radius: 6
             color: "#1a1a1a"
-            border.color: "#00ff00"
+            border.color: cpuTempMonitor.tempColor
             border.width: 2
+            
+            // Glow effect
+            Rectangle {
+                anchors.fill: parent
+                radius: parent.radius
+                color: "transparent"
+                border.color: cpuTempMonitor.tempColor
+                border.width: 1
+                opacity: 0.2
+                scale: 1.15
+            }
+            
+            Row {
+                anchors.centerIn: parent
+                spacing: 3
+                
+                // Temperature value (rounded, no decimals)
+                Text {
+                    text: Math.round(cpuTempMonitor.temperature)
+                    font.family: "Monospace"
+                    font.pixelSize: 14
+                    font.bold: true
+                    color: cpuTempMonitor.tempColor
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+            }
         }
         
         // Mouth (Text Display Area)
@@ -223,7 +249,7 @@ ApplicationWindow {
         running: true
         repeat: true
         
-        property string logContent: "╔═══════════════════════════════════════╗\n║  SHATROX AI Robot Ready              ║\n╚═══════════════════════════════════════╝\n\nWaiting for button press..."
+        property string logContent: "╔═══════════════════════════════════════╗\\n║  SHATROX AI Robot Ready              ║\\n╚═══════════════════════════════════════╝\\n\\nWaiting for button press..."
         property string previousContent: ""
         property string logFile: "/tmp/shatrox-display.log"
         property int maxLines: 50
@@ -237,10 +263,10 @@ ApplicationWindow {
                 previousContent = logContent
                 
                 // Keep only last maxLines
-                var lines = content.split('\n')
+                var lines = content.split('\\n')
                 if (lines.length > maxLines) {
                     lines = lines.slice(lines.length - maxLines)
-                    content = lines.join('\n')
+                    content = lines.join('\\n')
                 }
                 logContent = content
                 
@@ -257,6 +283,45 @@ ApplicationWindow {
         id: newContentTimer
         interval: 2000
         onTriggered: logMonitor.hasNewContent = false
+    }
+    
+
+    
+    // Temperature monitoring timer
+    Timer {
+        id: cpuTempMonitor
+        interval: 500
+        running: true
+        repeat: true
+        
+        property real temperature: 0.0
+        property string tempColor: "#00ff00"
+        property bool fanActive: false
+        property string thermalFile: "/sys/class/thermal/thermal_zone0/temp"
+        
+        function updateColor() {
+            if (temperature < 50) {
+                tempColor = "#00ff00"
+            } else if (temperature < 60) {
+                tempColor = "#ffff00"
+            } else if (temperature < 70) {
+                tempColor = "#ff8800"
+            } else {
+                tempColor = "#ff0000"
+            }
+            fanActive = (temperature >= 40)
+        }
+        
+        onTriggered: {
+            var content = fileReader.readFile(thermalFile)
+            if (content !== "") {
+                var tempMilliC = parseInt(content.trim())
+                if (!isNaN(tempMilliC)) {
+                    temperature = tempMilliC / 1000.0
+                    updateColor()
+                }
+            }
+        }
     }
     
     // File reader helper
@@ -281,5 +346,6 @@ ApplicationWindow {
     Component.onCompleted: {
         console.log("SHATROX Robot Face Display Started")
         console.log("Monitoring:", logMonitor.logFile)
+        console.log("Temperature sensor:", cpuTempMonitor.thermalFile)
     }
 }
