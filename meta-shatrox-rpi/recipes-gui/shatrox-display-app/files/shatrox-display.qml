@@ -9,6 +9,54 @@ ApplicationWindow {
     title: "SHATROX AI Robot"
     color: "#0a0a0a"
     
+    // Helper function to add laugh message to log
+    function addLaughToLog() {
+        var xhr = new XMLHttpRequest()
+        xhr.open("GET", "file://" + logMonitor.logFile, false)
+        var currentLog = ""
+        try {
+            xhr.send()
+            if (xhr.status === 200 || xhr.status === 0) {
+                currentLog = xhr.responseText
+            }
+        } catch(e) {}
+        
+        // Append laugh message  
+        var laughMsg = "\n😄 HA HA HA HA HA! 😄\n"
+        var newLog = currentLog + laughMsg
+        
+        // Write back to log file
+        var writeXhr = new XMLHttpRequest()
+        writeXhr.open("PUT", "file://" + logMonitor.logFile, false)
+        try {
+            writeXhr.send(newLog)
+        } catch(e) {
+            console.log("Could not write laugh to log:", e)
+        }
+    }
+    
+    // Touch monitor (ADS7846 driver workaround - monitors IRQ count)
+    Timer {
+        id: touchMonitor
+        interval: 100
+        running: true
+        repeat: true
+        
+        property string touchFile: "/tmp/shatrox-touch-trigger"
+        property string lastTouch: ""
+        
+        onTriggered: {
+            var content = fileReader.readFile(touchFile)
+            if (content !== "" && content !== lastTouch) {
+                lastTouch = content
+                console.log("TOUCH DETECTED via IRQ monitor!")
+                addLaughToLog()
+                laughAnimation.start()
+            }
+        }
+    }
+    
+    
     // Robot Face Layout
     Column {
         anchors.fill: parent
@@ -56,6 +104,17 @@ ApplicationWindow {
                     color: "#0a0a0a"
                     anchors.top: parent.top
                 }
+                
+                // Touch handler
+                MouseArea {
+                    anchors.fill: parent
+                    z: 10
+                    onClicked: {
+                        console.log("Eye tapped - laughing!")
+                        addLaughToLog()
+                        laughAnimation.start()
+                    }
+                }
             }
             
             // Right Eye
@@ -93,6 +152,17 @@ ApplicationWindow {
                     height: 0
                     color: "#0a0a0a"
                     anchors.top: parent.top
+                }
+                
+                // Touch handler
+                MouseArea {
+                    anchors.fill: parent
+                    z: 10
+                    onClicked: {
+                        console.log("Eye tapped - laughing!")
+                        addLaughToLog()
+                        laughAnimation.start()
+                    }
                 }
             }
         }
@@ -241,6 +311,73 @@ ApplicationWindow {
             }
         }
     }
+    
+    // Laugh animation (quick repeated blinks)
+    SequentialAnimation {
+        id: laughAnimation
+        
+        // Play laugh sound at start
+        ScriptAction {
+            script: {
+                // Trigger laugh sound using speak command
+                var component = Qt.createQmlObject('import QtQuick 2.15; import Qt.labs.platform 1.1; Process { onFinished: destroy() }',
+                                                   root, "laughProcess")
+                // Use Piper TTS to say "ha ha ha ha" with expression
+                laughSound.playLaugh()
+            }
+        }
+        
+        // Three quick blinks
+        ParallelAnimation {
+            NumberAnimation { target: leftEyelid; property: "height"; to: leftEye.height; duration: 80 }
+            NumberAnimation { target: rightEyelid; property: "height"; to: rightEye.height; duration: 80 }
+        }
+        PauseAnimation { duration: 60 }
+        ParallelAnimation {
+            NumberAnimation { target: leftEyelid; property: "height"; to: 0; duration: 80 }
+            NumberAnimation { target: rightEyelid; property: "height"; to: 0; duration: 80 }
+        }
+        PauseAnimation { duration: 100 }
+        
+        ParallelAnimation {
+            NumberAnimation { target: leftEyelid; property: "height"; to: leftEye.height; duration: 80 }
+            NumberAnimation { target: rightEyelid; property: "height"; to: rightEye.height; duration: 80 }
+        }
+        PauseAnimation { duration: 60 }
+        ParallelAnimation {
+            NumberAnimation { target: leftEyelid; property: "height"; to: 0; duration: 80 }
+            NumberAnimation { target: rightEyelid; property: "height"; to: 0; duration: 80 }
+        }
+        PauseAnimation { duration: 100 }
+        
+        ParallelAnimation {
+            NumberAnimation { target: leftEyelid; property: "height"; to: leftEye.height; duration: 80 }
+            NumberAnimation { target: rightEyelid; property: "height"; to: rightEye.height; duration: 80 }
+        }
+        PauseAnimation { duration: 60 }
+        ParallelAnimation {
+            NumberAnimation { target: leftEyelid; property: "height"; to: 0; duration: 80 }
+            NumberAnimation { target: rightEyelid; property: "height"; to: 0; duration: 80 }
+        }
+    }
+    
+    // Laugh sound handler
+    QtObject {
+        id: laughSound
+        
+        function playLaugh() {
+            console.log("Triggering laugh sound...")
+            // Write trigger file - a monitor script can watch for this
+            var xhr = new XMLHttpRequest()
+            xhr.open("PUT", "file:///tmp/shatrox-laugh-trigger", false)
+            try {
+                xhr.send(new Date().toString() + "\\n")
+            } catch(e) {
+                console.log("Could not write laugh trigger:", e)
+            }
+        }
+    }
+    
     
     // Log file monitor
     Timer {

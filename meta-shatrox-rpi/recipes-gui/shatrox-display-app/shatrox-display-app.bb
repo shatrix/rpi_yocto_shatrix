@@ -7,13 +7,15 @@ SRC_URI = " \
     file://shatrox-display.qml \
     file://shatrox-display-start \
     file://shatrox-display.service \
+    file://shatrox-touch-monitor \
+    file://shatrox-touch-monitor.service \
 "
 
 S = "${WORKDIR}"
 
 inherit systemd
 
-SYSTEMD_SERVICE:${PN} = "shatrox-display.service"
+SYSTEMD_SERVICE:${PN} = "shatrox-display.service shatrox-touch-monitor.service"
 SYSTEMD_AUTO_ENABLE:${PN} = "enable"
 
 RDEPENDS:${PN} = " \
@@ -31,14 +33,18 @@ do_install() {
     # Install launcher script
     install -d ${D}${bindir}
     install -m 0755 ${WORKDIR}/shatrox-display-start ${D}${bindir}/
+    install -m 0755 ${WORKDIR}/shatrox-touch-monitor ${D}${bindir}/
     
-    # Install systemd service
+    # Install systemd services
     install -d ${D}${systemd_system_unitdir}
     install -m 0644 ${WORKDIR}/shatrox-display.service ${D}${systemd_system_unitdir}/
+    install -m 0644 ${WORKDIR}/shatrox-touch-monitor.service ${D}${systemd_system_unitdir}/
 }
 
 FILES:${PN} += " \
     ${datadir}/shatrox/shatrox-display.qml \
     ${bindir}/shatrox-display-start \
+    ${bindir}/shatrox-touch-monitor \
     ${systemd_system_unitdir}/shatrox-display.service \
+    ${systemd_system_unitdir}/shatrox-touch-monitor.service \
 "

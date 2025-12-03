@@ -17,5 +17,20 @@ echo "║           SHATROX AI Display Ready                       ║" >> "$LOG
 echo "╚═══════════════════════════════════════════════════════════╝" >> "$LOG_FILE"
 echo "" >> "$LOG_FILE"
 
+# Qt EGLFS Touch Configuration
+export QT_QPA_PLATFORM=eglfs
+export QT_QPA_EGLFS_INTEGRATION=eglfs_kms
+# Let libinput handle touch (it auto-detects the touchscreen)
+# But add transformation for proper coordinate mapping
+export QT_QPA_EVDEV_TOUCHSCREEN_PARAMETERS="rotate=0:invertx=1"
+export QT_LOGGING_RULES="qt.qpa.input=true;qt.qpa.input.events=true"
+export QML_XHR_ALLOW_FILE_READ=1
+
+echo "Qt Touch Config:" >> "$LOG_FILE"
+echo "  Using libinput with coordinate transformation" >> "$LOG_FILE"
+echo "  Touch device: auto-detected (ADS7846)" >> "$LOG_FILE"
+echo "  QPA Platform: $QT_QPA_PLATFORM" >> "$LOG_FILE"
+echo "" >> "$LOG_FILE"
+
 # Launch QML app
 exec /usr/bin/qmlscene /usr/share/shatrox/shatrox-display.qml

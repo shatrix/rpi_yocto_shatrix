@@ -1,0 +1,28 @@
+#!/bin/bash
+# Touch Monitor - Monitors ADS7846 interrupt count
+# Since pen_down doesn't work but IRQs fire, we monitor /proc/interrupts
+
+TRIGGER_FILE="/tmp/shatrox-touch-trigger"
+LAST_COUNT=0
+
+echo "Touch monitor starting - watching ADS7846 IRQ count"
+
+while true; do
+    # Get current interrupt count for ads7846
+    CURRENT_COUNT=$(grep ads7846 /proc/interrupts | awk '{print $2}')
+    
+    if [ -n "$CURRENT_COUNT" ] && [ "$CURRENT_COUNT" != "$LAST_COUNT" ]; then
+        # Interrupt count changed = touch detected!
+        echo "$(date +%s%N)" > "$TRIGGER_FILE"
+        echo "Touch detected! IRQ count: $LAST_COUNT -> $CURRENT_COUNT"
+        
+        # Play laugh sound directly
+        speak "ha ha ha ha ha!" &
+        
+        LAST_COUNT=$CURRENT_COUNT
+        sleep 0.5  # Debounce
+    else
+        LAST_COUNT=$CURRENT_COUNT
+        sleep 0.1
+    fi
+done
