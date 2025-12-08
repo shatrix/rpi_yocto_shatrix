@@ -2,3 +2,7 @@
 build-rpi/
 .vscode/
 
+# Downloaded AI files (large binaries, download with scripts/download-ai-files.sh)
+meta-shatrox-rpi/recipes-ai/ollama/files/ollama-linux-arm64.tgz
+meta-shatrox-rpi/recipes-ai/whisper-cpp/files/ggml-base.en.bin
+meta-shatrox-rpi/recipes-ai/ollama-models/files/*.gguf

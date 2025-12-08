@@ -6,11 +6,13 @@ Monitors 8 GPIO buttons and triggers LLM queries with TTS responses
 
 import gpiod
 from gpiod.line import Direction, Bias, Edge
+from gpiod import EdgeEvent
 import time
 import subprocess
 import sys
 import os
 import threading
+import socket
 
 # ---------------------------------------------------------
 # Updated GPIO mapping from user
@@ -25,26 +27,29 @@ BUTTON_MAP = {
 }
 
 # Button to question mapping (K1, K2, K4, K8 use special actions)
+# Button to question mapping (K1, K2, K4, K8 use special actions)
 BUTTON_QUESTIONS = {
-    "K1": None,
+    "K1": "Voice Chat (Hold to Speak)",
     "K2": None,
-    "K3": "What is the Raspberry Pi?",
+    "K3": "Camera Vision",
     "K4": None,  # Cancel/Stop button
     "K8": None,
 }
 
 INPUT_PINS = list(BUTTON_MAP.keys())
 CHIP_PATH = "/dev/gpiochip0"
-DEBOUNCE_MS = 500  # half a second is enough
+DEBOUNCE_MS = 50  # 50ms is sufficient for mechanical bounce, 200ms is too long for quick clicks
 DISPLAY_LOG = "/tmp/shatrox-display.log"
+AI_CHATBOT_SOCKET = "/tmp/ai-chatbot.sock"
 
 last_press_time = {}
+k1_is_recording = False
 
 # Track which buttons have active threads running
-# Only track K3 (long-running LLM task)
-# K1/K2 are fire-and-forget TTS, K4 is cancel, K8 is shutdown
+# Only track K1 (long-running LLM task)
+# K3/K2 are fire-and-forget, K4 is cancel, K8 is shutdown
 active_threads = {
-    "K3": False,
+    "K1": False,
 }
 
 
@@ -57,6 +62,20 @@ def display_print(msg, end='\n'):
             f.flush()
     except Exception as e:
         print(f"Warning: Could not write to display log: {e}", file=sys.stderr)
+
+
+def send_ai_command(command):
+    """Send command to AI chatbot socket"""
+    try:
+        sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        sock.connect(AI_CHATBOT_SOCKET)
+        sock.sendall(command.encode('utf-8'))
+        response = sock.recv(1024).decode('utf-8')
+        sock.close()
+        return response
+    except Exception as e:
+        display_print(f"[AI] Error communicating with chatbot: {e}")
+        return None
 
 
 def stop_all_activities():
@@ -106,14 +125,45 @@ def stop_all_activities():
     display_print("━" * 60 + "\n")
 
 
-def _handle_button_press_impl(button_name):
+def _handle_button_press_impl(button_name, event_type):
     """Implementation of button press handling (runs in thread)"""
+    global k1_is_recording
     
     try:
         # ----------------------------------------------
-        # SPECIAL ACTIONS FOR K1, K2, K4, AND K8
+        # K1: VOICE CHAT (HOLD TO TALK)
         # ----------------------------------------------
+        if button_name == "K1":
+            if event_type == EdgeEvent.Type.FALLING_EDGE: # Press
+                if not k1_is_recording:
+                    display_print("[K1] Starting voice recording (hold to speak)...")
+                    send_ai_command("START_RECORDING")
+                    k1_is_recording = True
+            
+            elif event_type == EdgeEvent.Type.RISING_EDGE: # Release
+                if k1_is_recording:
+                    display_print("[K1] Stopping voice recording...")
+                    send_ai_command("STOP_RECORDING")
+                    k1_is_recording = False
+            return
 
+        # ----------------------------------------------
+        # IGNORE RELEASE EVENTS FOR OTHER BUTTONS
+        # ----------------------------------------------
+        if event_type == EdgeEvent.Type.RISING_EDGE: # Release
+            return
+
+        # ----------------------------------------------
+        # K3: CAMERA VISION (PRESS)
+        # ----------------------------------------------
+        if button_name == "K3":
+            display_print("[K3] Camera vision - capturing image...")
+            send_ai_command("CAMERA_CAPTURE")
+            return
+
+        # ----------------------------------------------
+        # K8: SHUTDOWN
+        # ----------------------------------------------
         if button_name == "K8":
             display_print("[K8] System shutdown initiated...")
             subprocess.Popen([
@@ -124,18 +174,16 @@ def _handle_button_press_impl(button_name):
             subprocess.run(["shutdown", "-h", "now"])
             return
 
+        # ----------------------------------------------
+        # K4: CANCEL
+        # ----------------------------------------------
         if button_name == "K4":
             stop_all_activities()
             return
 
-        if button_name == "K1":
-            display_print("[K1] Speaking fun message...")
-            subprocess.Popen([
-                "speak",
-                "zoozoo haii yaii yaii"
-            ])
-            return
-
+        # ----------------------------------------------
+        # K2: GREETING
+        # ----------------------------------------------
         if button_name == "K2":
             display_print("[K2] Speaking greeting message...")
             subprocess.Popen([
@@ -144,52 +192,18 @@ def _handle_button_press_impl(button_name):
             ])
             return
 
-        # ----------------------------------------------
-        # DEFAULT = Llama-ask for K3 only
-        # ----------------------------------------------
-
-        question = BUTTON_QUESTIONS.get(button_name, "Unknown question")
-
-        display_print(f"\n>>> [{button_name}] Question: {question}")
-        display_print("━" * 60)
-
-        try:
-            result = subprocess.Popen(
-                ["llama-ask", question],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                text=True,
-                bufsize=1
-            )
-
-            for line in result.stdout:
-                display_print(line.rstrip())
-
-            result.wait(timeout=60)
-
-            # Exit code -9 means we killed it (via K4), which is expected
-            if result.returncode != 0 and result.returncode != -9:
-                display_print(f"Error: llama-ask returned code {result.returncode}")
-
-        except subprocess.TimeoutExpired:
-            display_print("Error: Request timeout")
-            result.kill()
-        except FileNotFoundError:
-            display_print("Error: llama-ask command not found")
-        except Exception as e:
-            display_print(f"Error: {e}")
-    
     finally:
         # Always mark button as inactive when thread completes
         if button_name in active_threads:
             active_threads[button_name] = False
 
 
-def handle_button_press(button_name):
+def handle_button_press(button_name, event_type):
     """Handle a button press event by launching it in a separate thread"""
     
     # Check if this button already has an active thread running
-    if button_name in active_threads and active_threads[button_name]:
+    # K1 is allowed to re-enter for Release event
+    if button_name != "K1" and button_name in active_threads and active_threads[button_name]:
         display_print(f"[{button_name}] Already running - restarting...")
         stop_all_activities()  # Kill everything
         time.sleep(0.5)  # Longer pause to ensure cleanup
@@ -201,7 +215,7 @@ def handle_button_press(button_name):
     # Run the button handler in a daemon thread so main loop stays responsive
     thread = threading.Thread(
         target=_handle_button_press_impl,
-        args=(button_name,),
+        args=(button_name, event_type),
         daemon=True,
         name=f"Button-{button_name}"
     )
@@ -214,7 +228,7 @@ def run():
     line_settings = gpiod.LineSettings(
         direction=Direction.INPUT,
         bias=Bias.PULL_UP,
-        edge_detection=Edge.FALLING
+        edge_detection=Edge.BOTH
     )
 
     try:
@@ -239,6 +253,7 @@ def run():
                     for event in events:
                         gpio_pin = event.line_offset
                         button_name = BUTTON_MAP.get(gpio_pin, "Unknown")
+                        event_type = event.event_type # 1=Rising(Release), 2=Falling(Press)
 
                         now = time.time() * 1000
 
@@ -247,7 +262,7 @@ def run():
                             continue
 
                         last_press_time[button_name] = now
-                        handle_button_press(button_name)
+                        handle_button_press(button_name, event_type)
 
                         # Crucial: stop processing this batch (bounce fix)
                         break

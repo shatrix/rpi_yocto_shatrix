@@ -9,8 +9,8 @@
 # Inherit from the core image
 require sh-rpi-core-image.bb
 
-DESCRIPTION = "AI-enabled image for Raspberry Pi 5 with LLM inference capabilities (llama.cpp + Qwen2.5-1.5B)"
-PR = "r001"
+DESCRIPTION = "AI-enabled image for Raspberry Pi 5 with LLM inference capabilities (Ollama + Qwen models)"
+PR = "r002"
 
 # Add AI-specific packages
 IMAGE_INSTALL += " \
@@ -23,11 +23,11 @@ IMAGE_INSTALL += " \
 ################################################################################
 
 AI_PKGS = " \
-    llama-cpp \
-    llama-cpp-server \
-    llama-cpp-tools \
-    llama-models \
+    ollama \
+    ollama-models \
+    python3-ollama \
     python3-numpy \
+    ai-chatbot \
     cmake \
     tmux \
     shatrox-buttons-service \

@@ -1,0 +1,21 @@
+[Unit]
+Description=AI Chatbot Service
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 /usr/bin/ai-chatbot.py
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+# Runtime directories
+RuntimeDirectory=ai-chatbot
+RuntimeDirectoryMode=0755
+
+# Logging
+SyslogIdentifier=ai-chatbot
+
+[Install]
+WantedBy=multi-user.target

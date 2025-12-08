@@ -38,6 +38,7 @@ IMAGE_INSTALL += " \
     ${DEV_MINIMAL} \
     ${UTILITIES_MIN} \
     ${TTS_PKGS} \
+    ${AI_CHATBOT_PKGS} \
 "
 
 ################################################################################
@@ -151,6 +152,24 @@ TTS_PKGS = " \
     piper-tts \
     alsa-utils \
     startup-sound-service \
+"
+
+################################################################################
+# AI Chatbot (Speech Recognition + Vision + LLM)
+################################################################################
+
+AI_CHATBOT_PKGS = " \
+    whisper-cpp \
+    ollama \
+    ollama-models \
+    python3-ollama \
+    ai-chatbot \
+    python3-pip \
+    python3-numpy \
+    ffmpeg \
+    libpisp \
+    libcamera \
+    libcamera-apps \
 "
 
 ################################################################################

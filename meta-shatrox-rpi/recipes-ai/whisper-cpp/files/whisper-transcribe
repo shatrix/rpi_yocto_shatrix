@@ -1,0 +1,44 @@
+#!/bin/bash
+################################################################################
+# Whisper transcription wrapper using whisper.cpp
+# Usage: whisper-transcribe <audio-file>
+################################################################################
+
+if [ -z "$1" ]; then
+    echo "Usage: whisper-transcribe <audio-file>"
+    exit 1
+fi
+
+AUDIO_FILE="$1"
+# Using tiny.en q5_1 quantized model - greatly reduces memory usage (~300MB vs 4GB)
+MODEL="/usr/share/whisper-models/ggml-tiny.en-q5_1.bin"
+
+if [ ! -f "$AUDIO_FILE" ]; then
+    echo "Error: Audio file not found: $AUDIO_FILE"
+    exit 1
+fi
+
+if [ ! -f "$MODEL" ]; then
+    echo "Error: Whisper model not found: $MODEL"
+    exit 1
+fi
+
+# Run whisper.cpp
+# Using whisper-cli (via whisper-cpp symlink) - no deprecation warnings
+# Memory optimization flags:
+#   --threads 2       : Limit CPU threads
+#   -bs 1             : Beam size 1 (greedy decoding, not beam search) - HUGE memory saver
+#   -mc 768           : Max context tokens (prevents unlimited buffer growth)
+# Disable ggml crash handler backtrace to prevent gdb output in stdout
+export GGML_ABORT=0
+
+/usr/bin/whisper-cpp \
+    -m "${MODEL}" \
+    -f "${AUDIO_FILE}" \
+    --language en \
+    --threads 2 \
+    -bs 1 \
+    -mc 768 \
+    --no-timestamps \
+    --print-progress false \
+    2>/dev/null | grep -v "^$" | grep -v "Thread debugging" | grep -v "libthread_db"

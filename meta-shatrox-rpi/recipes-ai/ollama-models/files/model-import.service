@@ -1,0 +1,17 @@
+[Unit]
+Description=Import Ollama Models on First Boot
+After=ollama.service
+Requires=ollama.service
+ConditionPathExists=!/var/lib/ollama/.models-imported
+
+[Service]
+Type=oneshot
+Environment="HOME=/root"
+# Wait for Ollama to fully initialize (it starts but takes time to be ready)
+ExecStartPre=/bin/sleep 10
+ExecStart=/usr/bin/import-models.sh
+RemainAfterExit=yes
+TimeoutStartSec=300
+
+[Install]
+WantedBy=multi-user.target

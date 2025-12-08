@@ -18,7 +18,6 @@ SYSTEMD_AUTO_ENABLE:${PN} = "enable"
 RDEPENDS:${PN} = " \
     python3-core \
     python3-gpiod \
-    llama-cpp-tools \
 "
 
 do_install() {

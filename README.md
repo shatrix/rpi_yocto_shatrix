@@ -87,6 +87,49 @@ bitbake -k sh-rpi-ai-image
 ```
 Includes: Everything from core + llama.cpp + Qwen2.5-1.5B model
 
+## Known Issues
+
+### AI Image - Current Limitations
+
+> [!WARNING]
+> The AI image is currently in **experimental state** with several known issues:
+
+**1. Camera Integration (libcamera)**
+-Camera support via `libcamera` is **not working** on the current Yocto build
+- Integration of `libpisp` backend has build/runtime issues
+- **Workaround**: Camera features are disabled
+
+**2. Voice Input (Whisper ASR) - Memory Issues**
+- `whisper.cpp` requires **~1.6GB RAM** even with the smallest quantized model (`tiny-q5_1`)
+- On **4GB Raspberry Pi 5** with Ollama running, whisper transcription triggers **OOM (Out of Memory) kills**
+- **Current status**: Voice input (K1 button) fails with memory allocation errors
+- **Workarounds**:
+  - Use **8GB Raspberry Pi 5** (untested)
+  - Expand root partition to full SD card size and add 4GB swap (slow)
+  - Switch to VOSK ASR (lighter, ~500MB, lower accuracy) - not yet implemented
+
+**3. First Boot - Ollama Model Loading**
+- Initial boot takes **4-5 minutes** for Ollama to download and import AI models
+- The `model-import.service` waits for Ollama to be ready and pulls models via HTTP
+- **Normal behavior**: During first boot, AI features won't respond until models are loaded
+- **Check status**: `journalctl -u model-import.service -f`
+
+**4. Disk Space Requirements**
+- Default image creates a **6GB partition** regardless of SD card size
+- **Minimum recommended**: 16GB SD card (boot partition uses ~5.5GB)
+- **After first boot**: Expand root partition to utilize full SD card capacity:
+  ```bash
+  fdisk /dev/mmcblk0  # Delete and recreate partition 2 with full size
+  reboot
+  resize2fs /dev/mmcblk0p2
+  ```
+
+### Recommendations
+
+For a **more stable experience**, consider:
+- Using **Raspberry Pi OS** instead of Yocto (faster iteration, better hardware support)
+- Reference: [PiSugar Whisplay AI Chatbot](https://github.com/PiSugar/whisplay-ai-chatbot) uses Raspberry Pi OS with VOSK for local ASR
+
 ## Flash the Image to MicroSD Card
 
 1. Connect your microSD card to your PC
