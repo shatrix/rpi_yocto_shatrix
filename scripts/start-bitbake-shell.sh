@@ -33,41 +33,48 @@ function check_and_add_bblayer {
 
 # PyPI packages that need pre-downloading (PyPI blocks wget, we use pip3)
 function download_pypi_packages {
-  local DOWNLOADS_DIR="${HOME}/yocto/downloads"
+  # Get DL_DIR from Yocto config (works after oe-init-build-env is sourced)
+  local DOWNLOADS_DIR=$(bitbake-getvar --value DL_DIR 2>/dev/null | tail -1)
+  
+  # Fallback to default if bitbake-getvar fails
+  if [ -z "$DOWNLOADS_DIR" ] || [ ! -d "$DOWNLOADS_DIR" ]; then
+    DOWNLOADS_DIR="${SHATROX_RPI_BUILD_PATH}/../downloads"
+  fi
+  
   mkdir -p "$DOWNLOADS_DIR"
   
   echo ""
-  echo -e "\e[33m\e[1m📦 Checking PyPI packages for AI image...\e[0m"
+  echo -e "\e[33m\e[1m📦 Checking PyPI packages for AI image...\\e[0m"
   
   # Check and download onnxruntime
   if [ ! -f "$DOWNLOADS_DIR/onnxruntime-1.16.3-cp311-cp311-manylinux_2_17_aarch64.whl.done" ]; then
-    echo -e "  \e[36m→ Downloading onnxruntime wheel (PyPI blocks wget)...\e[0m"
+    echo -e "  \e[36m→ Downloading onnxruntime wheel (PyPI blocks wget)...\\e[0m"
     pip3 download onnxruntime==1.16.3 --no-deps --only-binary=:all: --platform manylinux_2_17_aarch64 --python-version 311 -d "$DOWNLOADS_DIR" -q 2>/dev/null
     cp "$DOWNLOADS_DIR/onnxruntime-1.16.3-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl" \
        "$DOWNLOADS_DIR/onnxruntime-1.16.3-cp311-cp311-manylinux_2_17_aarch64.whl" 2>/dev/null
     echo "done" > "$DOWNLOADS_DIR/onnxruntime-1.16.3-cp311-cp311-manylinux_2_17_aarch64.whl.done"
-    echo -e "  \e[32m✓ onnxruntime downloaded\e[0m"
+    echo -e "  \e[32m✓ onnxruntime downloaded\\e[0m"
   fi
   
   # Check and download webrtcvad
   if [ ! -f "$DOWNLOADS_DIR/webrtcvad-2.0.10.tar.gz.done" ]; then
-    echo -e "  \e[36m→ Downloading webrtcvad (PyPI blocks wget)...\e[0m"
+    echo -e "  \e[36m→ Downloading webrtcvad (PyPI blocks wget)...\\e[0m"
     pip3 download webrtcvad==2.0.10 --no-deps -d "$DOWNLOADS_DIR" -q 2>/dev/null
     echo "done" > "$DOWNLOADS_DIR/webrtcvad-2.0.10.tar.gz.done"
-    echo -e "  \e[32m✓ webrtcvad downloaded\e[0m"
+    echo -e "  \e[32m✓ webrtcvad downloaded\\e[0m"
   fi
   
   # Check and download scipy
   if [ ! -f "$DOWNLOADS_DIR/scipy-1.11.4-cp311-cp311-manylinux_2_17_aarch64.whl.done" ]; then
-    echo -e "  \e[36m→ Downloading scipy wheel (PyPI blocks wget)...\e[0m"
+    echo -e "  \e[36m→ Downloading scipy wheel (PyPI blocks wget)...\\e[0m"
     pip3 download scipy==1.11.4 --no-deps --only-binary=:all: --platform manylinux_2_17_aarch64 --python-version 311 -d "$DOWNLOADS_DIR" -q 2>/dev/null
     cp "$DOWNLOADS_DIR/scipy-1.11.4-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl" \
        "$DOWNLOADS_DIR/scipy-1.11.4-cp311-cp311-manylinux_2_17_aarch64.whl" 2>/dev/null
     echo "done" > "$DOWNLOADS_DIR/scipy-1.11.4-cp311-cp311-manylinux_2_17_aarch64.whl.done"
-    echo -e "  \e[32m✓ scipy downloaded\e[0m"
+    echo -e "  \e[32m✓ scipy downloaded\\e[0m"
   fi
   
-  echo -e "  \e[32m✓ All PyPI packages ready\e[0m"
+  echo -e "  \e[32m✓ All PyPI packages ready\\e[0m"
 }
 
 # include the extra project conf, and update bblayers paths

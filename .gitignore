@@ -6,3 +6,4 @@ build-rpi/
 meta-shatrox-rpi/recipes-ai/ollama/files/ollama-linux-arm64.tgz
 meta-shatrox-rpi/recipes-ai/whisper-cpp/files/ggml-base.en.bin
 meta-shatrox-rpi/recipes-ai/ollama-models/files/*.gguf
+reference-repo/
