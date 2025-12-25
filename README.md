@@ -16,12 +16,14 @@ SHATROX is a custom Poky-based distribution for Raspberry Pi boards, optimized f
   - `speak` command-line utility for easy TTS from terminal
 
 - **AI Capabilities** (AI image only):
-  - llama.cpp for efficient CPU-based LLM inference
-  - Pre-quantized Qwen2.5-1.5B Q2_K model (optimized for low memory, 676MB)
-  - Auto-start HTTP API server (llama-server) for instant responses
-  - Voice-interactive assistant (`llama-ask`) with TTS integration
-  - GPIO button interface for physical interaction (8 buttons)
-  - Helper scripts: `llama-server-start`, `llama-quick-start`
+  - Ollama for efficient on-device LLM inference
+  - Llama 3.2:1b text model with Moondream vision support
+  - **VOSK ASR** for offline speech recognition (~40MB model)
+  - **OpenWakeWord** for "Hey Jarvis" wake word detection
+  - **Piper TTS** for natural neural text-to-speech
+  - Voice-interactive assistant with TTS integration
+  - GPIO button interface for physical interaction (5 buttons: K1, K2, K3, K4, K8)
+  - WebRTC VAD for automatic speech end detection
 
 - **Hardware Support**:
   - Raspberry Pi 5 (primary target)
@@ -65,6 +67,9 @@ cd rpi_yocto_shatrix
 ./scripts/start-bitbake-shell.sh
 ```
 
+> [!NOTE]
+> The script automatically downloads PyPI packages (onnxruntime, scipy, webrtcvad) that PyPI blocks from wget. These are required for the AI image's OpenWakeWord feature.
+
 ### Build Options
 
 Choose the image that fits your needs:
@@ -99,14 +104,11 @@ Includes: Everything from core + llama.cpp + Qwen2.5-1.5B model
 - Integration of `libpisp` backend has build/runtime issues
 - **Workaround**: Camera features are disabled
 
-**2. Voice Input (Whisper ASR) - Memory Issues**
-- `whisper.cpp` requires **~1.6GB RAM** even with the smallest quantized model (`tiny-q5_1`)
-- On **4GB Raspberry Pi 5** with Ollama running, whisper transcription triggers **OOM (Out of Memory) kills**
-- **Current status**: Voice input (K1 button) fails with memory allocation errors
-- **Workarounds**:
-  - Use **8GB Raspberry Pi 5** (untested)
-  - Expand root partition to full SD card size and add 4GB swap (slow)
-  - Switch to VOSK ASR (lighter, ~500MB, lower accuracy) - not yet implemented
+**2. Voice Input - VOSK ASR (Implemented)**
+- Replaced Whisper with **VOSK ASR** for lower memory usage (~300MB vs 1.6GB)
+- **OpenWakeWord** for "Hey Jarvis" wake word detection (uses ONNX Runtime)
+- WebRTC VAD for automatic speech endpoint detection
+- **Current status**: Implemented and working
 
 **3. First Boot - Ollama Model Loading**
 - Initial boot takes **4-5 minutes** for Ollama to download and import AI models

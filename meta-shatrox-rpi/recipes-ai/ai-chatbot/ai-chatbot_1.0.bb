@@ -21,14 +21,16 @@ RDEPENDS:${PN} = " \
     python3-ollama \
     python3-vosk \
     python3-pyaudio \
+    python3-onnxruntime \
+    python3-openwakeword \
+    python3-webrtcvad \
+    openwakeword-models \
     piper-tts \
     alsa-utils \
     bash \
     libcamera \
     libcamera-apps \
 "
-# Note: python3-openwakeword and python3-webrtcvad are optional
-# Wake word detection disabled by default in config.ini
 
 do_install() {
     # Install main service script
