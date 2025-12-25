@@ -168,8 +168,7 @@ AI_CHATBOT_PKGS = " \
     python3-numpy \
     ffmpeg \
     libpisp \
-    libcamera \
-    libcamera-apps \
+    rpi-libcamera \
 "
 
 ################################################################################

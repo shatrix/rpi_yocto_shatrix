@@ -32,6 +32,9 @@ AI_PKGS = " \
     tmux \
     shatrox-buttons-service \
     shatrox-display-app \
+    startup-sound-service \
+    shatrox-volume-monitor \
+    shatrox-motor-control \
     ${QT5_MINIMAL} \
 "
 

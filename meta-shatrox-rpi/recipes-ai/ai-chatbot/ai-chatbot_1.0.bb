@@ -28,8 +28,7 @@ RDEPENDS:${PN} = " \
     piper-tts \
     alsa-utils \
     bash \
-    libcamera \
-    libcamera-apps \
+    rpi-libcamera \
 "
 
 do_install() {

@@ -24,12 +24,19 @@ SHATROX is a custom Poky-based distribution for Raspberry Pi boards, optimized f
   - Voice-interactive assistant with TTS integration
   - GPIO button interface for physical interaction (5 buttons: K1, K2, K3, K4, K8)
   - WebRTC VAD for automatic speech end detection
+  - **Camera Vision** via rpi-libcamera v0.5.2 (PiSP pipeline for RPi5)
+  - **Motor Control** with Waveshare Motor Driver HAT and obstacle avoidance
+  - **QML Display** with CPU temp, volume indicator, and camera photo overlay
 
 - **Hardware Support**:
   - Raspberry Pi 5 (primary target)
   - Wi-Fi, Bluetooth, GPIO, I2C, SPI, UART
   - USB Audio device support
   - HDMI display support
+  - 3.5" SPI Touch Display (piscreen overlay)
+  - **Camera Module 3** (imx708) via PiSP pipeline
+  - **Waveshare Motor Driver HAT** (PCA9685 PWM + TB6612FNG)
+  - **HC-SR04-P Ultrasonic Sensor** for obstacle detection
 
 ## Prerequisites
 This project is based on Yocto Project 5.0 (scarthgap)
@@ -99,10 +106,11 @@ Includes: Everything from core + llama.cpp + Qwen2.5-1.5B model
 > [!WARNING]
 > The AI image is currently in **experimental state** with several known issues:
 
-**1. Camera Integration (libcamera)**
--Camera support via `libcamera` is **not working** on the current Yocto build
-- Integration of `libpisp` backend has build/runtime issues
-- **Workaround**: Camera features are disabled
+**1. Camera Integration (rpi-libcamera)**
+- Camera support via **rpi-libcamera v0.5.2** (Raspberry Pi's libcamera fork)
+- Uses **PiSP pipeline handler** for RPi5 Camera Module 3 (imx708)
+- `libcamera-still` wrapper script provides compatibility with ai-chatbot.py
+- **Status**: Builds successfully, untested on hardware
 
 **2. Voice Input - VOSK ASR (Implemented)**
 - Replaced Whisper with **VOSK ASR** for lower memory usage (~300MB vs 1.6GB)

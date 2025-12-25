@@ -11,7 +11,7 @@ SRC_URI = " \
 
 S = "${WORKDIR}"
 
-inherit systemd
+inherit systemd python3-dir
 
 # Runtime dependencies
 RDEPENDS:${PN} = " \

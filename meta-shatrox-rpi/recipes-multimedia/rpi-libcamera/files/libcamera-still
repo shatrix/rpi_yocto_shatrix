@@ -1,0 +1,49 @@
+#!/bin/bash
+# libcamera-still wrapper - provides rpicam-still compatible interface
+# using libcamera's cam tool
+
+OUTPUT=""
+NOPREVIEW=""
+AUTOFOCUS=""
+IMMEDIATE=""
+
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        -o|--output)
+            OUTPUT="$2"
+            shift 2
+            ;;
+        --nopreview)
+            NOPREVIEW=1
+            shift
+            ;;
+        --autofocus)
+            AUTOFOCUS=1
+            shift
+            ;;
+        --immediate)
+            IMMEDIATE=1
+            shift
+            ;;
+        *)
+            shift
+            ;;
+    esac
+done
+
+if [ -z "$OUTPUT" ]; then
+    echo "Usage: libcamera-still -o <output.jpg> [--nopreview] [--autofocus] [--immediate]"
+    exit 1
+fi
+
+# Use cam tool to capture a single frame
+# cam --capture=1 saves to file
+cam --capture=1 --file="$OUTPUT" 2>/dev/null
+
+if [ $? -eq 0 ] && [ -f "$OUTPUT" ]; then
+    echo "Captured image to $OUTPUT"
+    exit 0
+else
+    echo "Failed to capture image"
+    exit 1
+fi
