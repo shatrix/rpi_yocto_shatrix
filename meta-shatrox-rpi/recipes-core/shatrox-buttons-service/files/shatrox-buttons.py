@@ -32,22 +32,24 @@ BUTTON_QUESTIONS = {
     "K1": "Voice Chat (Hold to Speak)",
     "K2": None,
     "K3": "Camera Vision",
-    "K4": None,  # Cancel/Stop button
+    "K4": None,  # Fun sound button
     "K8": None,
 }
 
 INPUT_PINS = list(BUTTON_MAP.keys())
-CHIP_PATH = "/dev/gpiochip0"
+CHIP_PATH = "/dev/gpiochip4"  # RPi 5 on Raspberry Pi OS uses gpiochip4
 DEBOUNCE_MS = 50  # 50ms is sufficient for mechanical bounce, 200ms is too long for quick clicks
 DISPLAY_LOG = "/tmp/shatrox-display.log"
 AI_CHATBOT_SOCKET = "/tmp/ai-chatbot.sock"
 
 last_press_time = {}
 k1_is_recording = False
+k1_recording_start_time = None  # RELIABILITY FIX: Track when K1 recording started
+K1_RECORDING_TIMEOUT = 15  # Seconds - force stop if stuck
 
 # Track which buttons have active threads running
 # Only track K1 (long-running LLM task)
-# K3/K2 are fire-and-forget, K4 is cancel, K8 is shutdown
+# K2/K3/K4 are fire-and-forget TTS, K8 is shutdown
 active_threads = {
     "K1": False,
 }
@@ -78,56 +80,10 @@ def send_ai_command(command):
         return None
 
 
-def stop_all_activities():
-    """Stop all running llama-ask and speak processes"""
-    display_print("\n" + "━" * 60)
-    display_print("[CANCEL] Stopping all activities...")
-    
-    # Kill all llama-ask processes (client-side only, leave server running)
-    try:
-        subprocess.run(["pkill", "-9", "llama-ask"], 
-                       stderr=subprocess.DEVNULL,
-                       stdout=subprocess.DEVNULL)
-    except Exception:
-        pass
-    
-    # Kill all speak/piper processes
-    try:
-        subprocess.run(["pkill", "-9", "speak"], 
-                       stderr=subprocess.DEVNULL,
-                       stdout=subprocess.DEVNULL)
-    except Exception:
-        pass
-    
-    try:
-        subprocess.run(["pkill", "-9", "piper"], 
-                       stderr=subprocess.DEVNULL,
-                       stdout=subprocess.DEVNULL)
-    except Exception:
-        pass
-    
-    # Kill audio playback processes (aplay, mpg123, etc.)
-    try:
-        subprocess.run(["pkill", "-9", "aplay"], 
-                       stderr=subprocess.DEVNULL,
-                       stdout=subprocess.DEVNULL)
-    except Exception:
-        pass
-    
-    try:
-        subprocess.run(["pkill", "-9", "mpg123"], 
-                       stderr=subprocess.DEVNULL,
-                       stdout=subprocess.DEVNULL)
-    except Exception:
-        pass
-    
-    display_print("[CANCEL] All activities stopped.")
-    display_print("━" * 60 + "\n")
-
 
 def _handle_button_press_impl(button_name, event_type):
     """Implementation of button press handling (runs in thread)"""
-    global k1_is_recording
+    global k1_is_recording, k1_recording_start_time
     
     try:
         # ----------------------------------------------
@@ -135,16 +91,35 @@ def _handle_button_press_impl(button_name, event_type):
         # ----------------------------------------------
         if button_name == "K1":
             if event_type == EdgeEvent.Type.FALLING_EDGE: # Press
+                # RELIABILITY FIX: Check for stuck recording (timeout recovery)
+                if k1_is_recording and k1_recording_start_time:
+                    elapsed = time.time() - k1_recording_start_time
+                    if elapsed > K1_RECORDING_TIMEOUT:
+                        display_print(f"[K1] Recording timeout ({elapsed:.1f}s) - forcing stop")
+                        send_ai_command("STOP_RECORDING")
+                        k1_is_recording = False
+                        k1_recording_start_time = None
+                
                 if not k1_is_recording:
+                    # Start recording
                     display_print("[K1] Starting voice recording (hold to speak)...")
                     send_ai_command("START_RECORDING")
                     k1_is_recording = True
+                    k1_recording_start_time = time.time()  # Track start time
+                else:
+                    # TOGGLE FALLBACK: If already recording, stop it
+                    # This handles cases where release event wasn't detected
+                    display_print("[K1] Stopping recording (toggle fallback)...")
+                    send_ai_command("STOP_RECORDING")
+                    k1_is_recording = False
+                    k1_recording_start_time = None
             
             elif event_type == EdgeEvent.Type.RISING_EDGE: # Release
                 if k1_is_recording:
                     display_print("[K1] Stopping voice recording...")
                     send_ai_command("STOP_RECORDING")
                     k1_is_recording = False
+                    k1_recording_start_time = None
             return
 
         # ----------------------------------------------
@@ -168,17 +143,21 @@ def _handle_button_press_impl(button_name, event_type):
             display_print("[K8] System shutdown initiated...")
             subprocess.Popen([
                 "speak",
-                "System is shutting down in 3 2 1"
+                "System is shutting down in 3 2 1  "
             ]).wait()  # Wait for TTS to complete
             display_print("[K8] Shutting down now...")
             subprocess.run(["shutdown", "-h", "now"])
             return
 
         # ----------------------------------------------
-        # K4: CANCEL
+        # K4: FUN SOUND
         # ----------------------------------------------
         if button_name == "K4":
-            stop_all_activities()
+            display_print("[K4] Playing fun sound...")
+            subprocess.Popen([
+                "speak",
+                "zoozoo haii yaii yaii"
+            ])
             return
 
         # ----------------------------------------------
@@ -188,7 +167,7 @@ def _handle_button_press_impl(button_name, event_type):
             display_print("[K2] Speaking greeting message...")
             subprocess.Popen([
                 "speak",
-                "Hi, I'm Ruby — an AI-powered robot here to answer your questions"
+                "Hi, I'm Jarvis — an AI-powered robot here to answer your questions"
             ])
             return
 
@@ -200,13 +179,6 @@ def _handle_button_press_impl(button_name, event_type):
 
 def handle_button_press(button_name, event_type):
     """Handle a button press event by launching it in a separate thread"""
-    
-    # Check if this button already has an active thread running
-    # K1 is allowed to re-enter for Release event
-    if button_name != "K1" and button_name in active_threads and active_threads[button_name]:
-        display_print(f"[{button_name}] Already running - restarting...")
-        stop_all_activities()  # Kill everything
-        time.sleep(0.5)  # Longer pause to ensure cleanup
     
     # Mark this button as active (before starting thread)
     if button_name in active_threads:
